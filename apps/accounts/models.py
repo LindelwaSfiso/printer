@@ -4,6 +4,8 @@ from django.utils import timezone
 
 from apps.core.models import TimeStampedModel
 
+from .managers import UserManager
+
 
 class User(AbstractUser, TimeStampedModel):
     """A society member or an administrator.
@@ -28,6 +30,8 @@ class User(AbstractUser, TimeStampedModel):
 
     USERNAME_FIELD = "student_no"
     REQUIRED_FIELDS = ["email", "first_name", "last_name"]
+
+    objects = UserManager()
 
     class Meta:
         ordering = ["student_no"]

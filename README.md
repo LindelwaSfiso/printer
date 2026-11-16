@@ -35,6 +35,18 @@ Open <http://127.0.0.1:8000>.
 | `ADMIN001` | `esprints123` | Administrator (dashboard at `/manage/`) |
 | `202202881` | `esprints123` | Student with 1,000 credits |
 
+To make your own administrator instead:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py createsuperuser
+# Student no: 101010   <- this is the login field, not a username
+```
+
+`createsuperuser` asks for the student number, email, first and last name. It
+sets `role=ADMIN`, `is_staff` and `is_superuser`, so that account lands on
+`/manage/` straight after signing in. (Plain `manage.py shell` users can also be
+created from the dashboard: `/manage/members/new/`.)
+
 `seed_demo` also creates a top-up invoice awaiting approval and a little print
 history, so the dashboard is not empty on the first run.
 
