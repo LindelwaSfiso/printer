@@ -18,6 +18,17 @@
       <form method="post" enctype="multipart/form-data" class="space-y-4 p-5" novalidate>
         {% csrf_token %}
 
+        {% if not account.available_credits %}
+          <div class="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+            <span class="pill-warning">0 credits</span>
+            <p class="min-w-0 flex-1 text-[12px] leading-relaxed text-amber-900">
+              You can still upload and price the job, but it cannot be queued until
+              you have credits.
+            </p>
+            <a href="{% url 'billing:topup' %}" class="btn-outline btn-sm">Top up</a>
+          </div>
+        {% endif %}
+
         <div>
           <label class="label" for="{{ form.document.id_for_label }}">{{ form.document.label }}</label>
           {{ form.document }}

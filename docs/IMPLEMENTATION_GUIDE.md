@@ -50,7 +50,7 @@ well-trodden answer.
 
 | Objective (from report §1.3) | Difficulty | Verdict | What makes it work |
 |---|---|---|---|
-| Membership access control | Low | Straightforward | Django auth + roles + subscription check |
+| Membership access control | Low | Straightforward | Django auth + roles + credit balance (a plan *grants* credits, it is not a licence to print) |
 | Subscription-credit engine | Medium | Straightforward | Integer-credit ledger with holds |
 | Online upload platform | Low | Straightforward | Django forms + PDF page counting |
 | Automatic billing | Medium | Straightforward | Deterministic tariff function + tests |
@@ -200,7 +200,7 @@ Use these IDs in your report (Chapter 3, SRS table). They map 1:1 to the pages y
 | ID | Requirement | Report objective | Phase |
 |---|---|---|---|
 | FR-01 | Students register with student number + phone; an admin approves the account | Membership | §9 |
-| FR-02 | Only a member with an **active subscription** may submit a print job | Membership | §9, §11 |
+| FR-02 | Only an approved, active member may submit a print job. **Credits** pay for printing: a subscription is one way to obtain them, a top-up is another | Membership | §9, §11 |
 | FR-03 | Two roles: Member and Administrator (RBAC); approval is a staff permission | Membership | §9 |
 | FR-04 | Admin creates plans (price, duration, fixed credits granted) | Subscription-credit | §10 |
 | FR-05 | Activating a subscription grants the plan's credits **exactly once** | Subscription-credit | §10 |
@@ -847,6 +847,21 @@ double-clicking "Activate" cannot double-credit.
 Default plan: **E150.00 per semester, granting 1000 credits** (E100 of printing, i.e. 100
 mono pages). The remaining E50 is the society's operating margin — state that in your
 report; it is the honest economics of the service.
+
+**A subscription grants credits; it does not license printing.** This is a deliberate
+change from revision 1, and it is worth a paragraph in Chapter 3:
+
+| Situation | Must the member be able to print? | Why |
+|---|---|---|
+| Topped up E50, never bought a plan | **Yes** | That is revenue already banked. Refusing to let them spend it means the society holds money for a service it will not deliver |
+| Plan just expired, 300 credits left | **Yes** | The credits were paid for. Expiry ends the *grant*, not the balance |
+| No plan and 0 credits | No | Nothing to charge; `place_hold` refuses and the UI explains |
+| Account deactivated by an admin | No | Access control is about the account, not the money |
+
+So the gate is the **credit balance** (FR-08), and `MemberRequiredMixin` only checks that
+the account is approved and active. The switch `REQUIRE_SUBSCRIPTION_TO_PRINT=1` restores
+the stricter "subscribers only" rule if the society decides it wants plan revenue to be
+mandatory. Record which one you shipped in your report's requirements table.
 
 ### 6.3 Invoice rules
 

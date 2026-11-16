@@ -127,6 +127,16 @@ INVOICE_TTL_HOURS = int(os.environ.get("INVOICE_TTL_HOURS", "72"))
 JOB_EXPIRY_HOURS = int(os.environ.get("JOB_EXPIRY_HOURS", "24"))
 LOW_CREDITS_THRESHOLD = int(os.environ.get("LOW_CREDITS_THRESHOLD", "20"))
 
+# Who may print?
+#   0 (default) -> any approved, active member with credits. A subscription is
+#                  one way to get credits, a top-up is another, and expired
+#                  members can still spend the credits they already paid for.
+#   1           -> only members with an active subscription may print.
+# Printing is always paid for: this switch decides who is *allowed* to try, not
+# whether credit is required.
+REQUIRE_SUBSCRIPTION_TO_PRINT = os.environ.get(
+    "REQUIRE_SUBSCRIPTION_TO_PRINT", "0") == "1"
+
 SOCIETY_NAME = os.environ.get("SOCIETY_NAME", "Engineering Society")
 SOCIETY_MOMO_NUMBER = os.environ.get("SOCIETY_MOMO_NUMBER", "+268 7612 3456")
 SOCIETY_MOMO_NAME = os.environ.get("SOCIETY_MOMO_NAME", "Engineering Society (UNESWA)")

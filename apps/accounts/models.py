@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -66,4 +67,18 @@ class User(AbstractUser, TimeStampedModel):
 
     @property
     def can_print(self):
-        return self.is_active and self.is_member and self.active_subscription is not None
+        """May this account submit print jobs at all?
+
+        Credits are the currency, so a subscription is not required by default:
+        a member who topped up must be able to spend what they paid for, and a
+        member whose plan expired keeps the right to use credits they already
+        own. Whether they can afford a *particular* job is decided when those
+        credits are reserved (apps/credits/services.py:place_hold), not here.
+
+        Set REQUIRE_SUBSCRIPTION_TO_PRINT=1 to restore the stricter rule.
+        """
+        if not (self.is_active and self.is_member):
+            return False
+        if settings.REQUIRE_SUBSCRIPTION_TO_PRINT:
+            return self.active_subscription is not None
+        return True

@@ -109,6 +109,11 @@ production.
 * Credits are the print currency: **10 credits = E1.00**, one mono A4 side = 10.
 * A plan grants a **fixed** number of credits once (reference
   `sub:<id>:allocation`), so activating twice cannot double-credit.
+* **A subscription is one way to get credits, not a licence to print.** A member
+  with credits can print with no plan at all (pay-as-you-go), and a member whose
+  plan just expired can still spend the credits they had already paid for. The
+  gate is the balance, checked when the job reserves its price.
+  If the society wants the stricter rule, set `REQUIRE_SUBSCRIPTION_TO_PRINT=1`.
 * Confirming a job **reserves** credits; they are only spent when the job
   prints. A failure releases them automatically.
 * Topping up: member creates an invoice (`ESP-2027-0007`), pays the society's

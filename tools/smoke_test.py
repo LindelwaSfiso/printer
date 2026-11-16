@@ -251,6 +251,45 @@ def main():
         else:
             check("new member dashboard", fresh.get("/home/"))
 
+            # This member has no subscription at all. Credits must be enough:
+            # a top-up is revenue, and holding money a member cannot spend is a bug.
+            from apps.credits.services import post_entry
+            new_account = ensure_account(invited)
+            post_entry(account_id=new_account.id, delta_credits=60,
+                       kind="ADJUSTMENT",
+                       reference=f"smoke:credit:{new_number}",
+                       memo="smoke test credit, no subscription")
+
+            check("job page reachable without a plan", fresh.get("/jobs/new/"))
+            pdf = SimpleUploadedFile("no-plan.pdf", make_pdf(3),
+                                     content_type="application/pdf")
+            check("upload without a plan", fresh.post("/jobs/new/", {
+                "document": pdf, "colour_mode": "MONO", "sides": "SIMPLEX",
+                "paper": "A4", "copies": 1}, follow=True))
+
+            plan_job = (PrintJob.objects.filter(member=invited)
+                        .order_by("-created_at").first())
+            if plan_job is None:
+                failures.append("a member without a plan could not create a job")
+            else:
+                print(f"  job {plan_job.code}: {plan_job.cost_credits} credits, "
+                      f"subscription={invited.active_subscription}")
+                if plan_job.cost_credits != 30:
+                    failures.append(f"3 pages should cost 30 credits, "
+                                    f"got {plan_job.cost_credits}")
+                check("confirm without a plan",
+                      fresh.post(f"/jobs/{plan_job.public_id}/", follow=True))
+                call_command("run_worker", "--once", verbosity=0)
+                plan_job.refresh_from_db()
+                new_account.refresh_from_db()
+                if plan_job.status != PrintJob.Status.PRINTED:
+                    failures.append(f"no-plan job ended {plan_job.status}")
+                if new_account.balance_credits != 30:
+                    failures.append(f"no-plan balance {new_account.balance_credits}, "
+                                    f"expected 30")
+                else:
+                    print("  ok   printed and charged with no subscription")
+
     print("\n== ledger ==")
     call_command("check_credits", verbosity=0)
     return report()

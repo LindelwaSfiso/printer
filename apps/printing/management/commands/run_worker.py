@@ -1,11 +1,12 @@
-"""The print worker.
+"""The print worker: the process that actually takes jobs off the queue.
 
-    python manage.py run_worker          # loop forever (the real deployment)
-    python manage.py run_worker --once   # process at most one job
+    python manage.py run_worker            # service: loop for ever
+    python manage.py run_worker --drain    # print everything waiting, then exit
+    python manage.py run_worker --once     # print at most one job, then exit
 
-The web request never prints. This process claims from the queue, hands the job
-to the backend, and records the outcome -- the same split you will use with a
-real printer, so nothing changes when you switch PRINT_BACKEND.
+Nothing in the web request prints. A job sits in QUEUED until a worker claims it,
+because printing can take a minute and a browser should never wait for that.
+Run this in its own terminal (or as a service) and leave it running.
 """
 import logging
 import time
@@ -14,7 +15,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.printing import services
-from apps.printing.backends import PrintError, get_backend
+from apps.printing.backends import get_backend
+from apps.printing.models import PrintJob
 from apps.printing.queue import get_queue
 
 log = logging.getLogger(__name__)
@@ -25,7 +27,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--once", action="store_true",
-                            help="Process one job then exit")
+                            help="Print one job, then exit")
+        parser.add_argument("--drain", action="store_true",
+                            help="Print everything waiting, then exit")
         parser.add_argument("--idle", type=float,
                             default=settings.WORKER_IDLE_SECONDS,
                             help="Seconds to sleep when the queue is empty")
@@ -34,28 +38,41 @@ class Command(BaseCommand):
         backend = get_backend()
         if not backend.available():
             self.stderr.write(self.style.ERROR(
-                f"The {backend.name} backend is not available. Check PRINT_BACKEND "
-                f"and the printer settings in .env."))
+                f"The {backend.name} backend is not available. Check "
+                f"PRINT_BACKEND and the printer settings in .env."))
             return
 
         queue = get_queue()
-        self.stdout.write(self.style.SUCCESS(
-            f"Worker ready. backend={backend.name} queue={queue.name} "
-            f"depth={queue.depth()}"))
+        one_shot = options["once"] or options["drain"]
+        if not one_shot:
+            self.stdout.write(self.style.SUCCESS(
+                f"Worker running. backend={backend.name} queue={queue.name} "
+                f"depth={queue.depth()}  (Ctrl+C to stop)"))
+
+        printed = 0
+        failed = 0
 
         while True:
             job = services.process_next()
+
             if job is None:
-                if options["once"]:
-                    self.stdout.write("Queue empty.")
+                if one_shot:
+                    self.stdout.write(self.style.SUCCESS(
+                        f"Queue empty. Printed {printed}, failed {failed}."))
                     return
                 time.sleep(options["idle"])
                 continue
 
-            status = job.status
-            style = self.style.SUCCESS if status == "PRINTED" else self.style.WARNING
-            self.stdout.write(style(
-                f"{job.code} -> {status}"
-                + (f" ({job.failure_reason})" if job.failure_reason else "")))
+            if job.status == PrintJob.Status.PRINTED:
+                printed += 1
+                self.stdout.write(self.style.SUCCESS(
+                    f"  {job.code}  printed  {job.page_count} pages  "
+                    f"{job.cost_credits} credits  -> {job.output_file or job.spooler_name}"))
+            else:
+                failed += 1
+                self.stdout.write(self.style.WARNING(
+                    f"  {job.code}  {job.get_status_display().lower()}  "
+                    f"{job.failure_reason}"))
+
             if options["once"]:
                 return
