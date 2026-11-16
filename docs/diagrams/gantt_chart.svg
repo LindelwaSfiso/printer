@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="880" viewBox="0 0 1460 880" font-family="'Segoe UI', 'Inter', Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a1a1aa"/></marker><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#18181b"/></marker></defs>
+<rect width="1460" height="880" fill="#ffffff"/>
+<text x="40" y="52" text-anchor="start" font-size="25" font-weight="700" fill="#18181b">Project timeline — six months (Gantt chart)</text>
+<text x="40" y="78" text-anchor="start" font-size="12.5" font-weight="400" fill="#71717a">Engineering Society printing service · November 2026 to April 2027</text>
+<rect x="470.0" y="140" width="150.0" height="490" rx="0" fill="#fafafa" stroke="#fafafa" stroke-width="0"/>
+<line x1="470.0" y1="140" x2="470.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="545.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Nov 2026</text>
+<line x1="620.0" y1="140" x2="620.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="695.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Dec</text>
+<rect x="770.0" y="140" width="150.0" height="490" rx="0" fill="#fafafa" stroke="#fafafa" stroke-width="0"/>
+<line x1="770.0" y1="140" x2="770.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="845.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Jan 2027</text>
+<line x1="920.0" y1="140" x2="920.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="995.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Feb</text>
+<rect x="1070.0" y="140" width="150.0" height="490" rx="0" fill="#fafafa" stroke="#fafafa" stroke-width="0"/>
+<line x1="1070.0" y1="140" x2="1070.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="1145.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Mar</text>
+<line x1="1220.0" y1="140" x2="1220.0" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<text x="1295.0" y="128" text-anchor="middle" font-size="12" font-weight="600" fill="#71717a">Apr</text>
+<line x1="1370" y1="140" x2="1370" y2="630" stroke="#e4e4e7" stroke-width="1"/>
+<rect x="30" y="150" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="174.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Requirements, literature review, use cases</text>
+<rect x="470.0" y="159" width="150.0" height="22" rx="5" fill="#e4e4e7" stroke="#52525b" stroke-width="1.2"/>
+<text x="40" y="214.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Hardware selection and procurement</text>
+<rect x="470.0" y="199" width="180.0" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+<rect x="30" y="230" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="254.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Architecture, ERD and database design</text>
+<rect x="515.0" y="239" width="180.0" height="22" rx="5" fill="#e4e4e7" stroke="#52525b" stroke-width="1.2"/>
+<text x="40" y="294.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Environment setup, accounts and roles</text>
+<rect x="590.0" y="279" width="180.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<rect x="30" y="310" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="334.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Credit ledger and subscription engine</text>
+<rect x="710.0" y="319" width="210.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<text x="40" y="374.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">PDF upload, validation and tariff</text>
+<rect x="800.0" y="359" width="180.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<rect x="30" y="390" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="414.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Print queue and printer integration</text>
+<rect x="860.0" y="399" width="240.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<text x="40" y="454.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Manual top-up invoices and approval</text>
+<rect x="950.0" y="439" width="195.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<rect x="30" y="470" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="494.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Admin dashboard and reports</text>
+<rect x="1040.0" y="479" width="180.0" height="22" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<text x="40" y="534.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Testing, billing matrix and UAT</text>
+<rect x="1100.0" y="519" width="180.0" height="22" rx="5" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.2"/>
+<rect x="30" y="550" width="1340" height="40" rx="0" fill="#fcfcfc" stroke="#fcfcfc" stroke-width="0"/>
+<text x="40" y="574.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Report writing and corrections</text>
+<rect x="1130.0" y="559" width="210.0" height="22" rx="5" fill="#f4f4f5" stroke="#3f3f46" stroke-width="1.2"/>
+<text x="40" y="614.0" text-anchor="start" font-size="12.5" font-weight="400" fill="#18181b">Final demonstration and submission</text>
+<rect x="1250.0" y="599" width="120.0" height="22" rx="5" fill="#f4f4f5" stroke="#3f3f46" stroke-width="1.2"/>
+<line x1="545.0" y1="140" x2="545.0" y2="636" stroke="#18181b" stroke-width="1" stroke-dasharray="4 4"/>
+<polygon points="545.0,638 552.0,647 545.0,656 538.0,647" fill="#18181b" stroke="#18181b" stroke-width="1.2"/>
+<text x="545.0" y="674" text-anchor="middle" font-size="11" font-weight="600" fill="#18181b">Presentation 1</text>
+<line x1="920.0" y1="140" x2="920.0" y2="636" stroke="#18181b" stroke-width="1" stroke-dasharray="4 4"/>
+<polygon points="920.0,638 927.0,647 920.0,656 913.0,647" fill="#18181b" stroke="#18181b" stroke-width="1.2"/>
+<text x="920.0" y="674" text-anchor="middle" font-size="11" font-weight="600" fill="#18181b">Presentation 2</text>
+<line x1="1310.0" y1="140" x2="1310.0" y2="636" stroke="#18181b" stroke-width="1" stroke-dasharray="4 4"/>
+<polygon points="1310.0,638 1317.0,647 1310.0,656 1303.0,647" fill="#18181b" stroke="#18181b" stroke-width="1.2"/>
+<text x="1310.0" y="674" text-anchor="middle" font-size="11" font-weight="600" fill="#18181b">Submission</text>
+<rect x="40" y="704" width="16" height="10" rx="3" fill="#e4e4e7" stroke="#52525b" stroke-width="1.2"/>
+<text x="64" y="713" text-anchor="start" font-size="11" font-weight="400" fill="#71717a">Design</text>
+<rect x="208" y="704" width="16" height="10" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+<text x="232" y="713" text-anchor="start" font-size="11" font-weight="400" fill="#71717a">Hardware</text>
+<rect x="376" y="704" width="16" height="10" rx="3" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.2"/>
+<text x="400" y="713" text-anchor="start" font-size="11" font-weight="400" fill="#71717a">Implementation</text>
+<rect x="544" y="704" width="16" height="10" rx="3" fill="#e0e7ff" stroke="#4338ca" stroke-width="1.2"/>
+<text x="568" y="713" text-anchor="start" font-size="11" font-weight="400" fill="#71717a">Testing</text>
+<rect x="712" y="704" width="16" height="10" rx="3" fill="#f4f4f5" stroke="#3f3f46" stroke-width="1.2"/>
+<text x="736" y="713" text-anchor="start" font-size="11" font-weight="400" fill="#71717a">Report &amp; demo</text>
+</svg>

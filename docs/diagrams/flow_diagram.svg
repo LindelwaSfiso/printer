@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1180" viewBox="0 0 1120 1180" font-family="'Segoe UI', 'Inter', Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a1a1aa"/></marker><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#18181b"/></marker></defs>
+<rect width="1120" height="1180" fill="#ffffff"/>
+<text x="40" y="52" text-anchor="start" font-size="25" font-weight="700" fill="#18181b">Flow diagram — the life of a print job</text>
+<text x="40" y="78" text-anchor="start" font-size="12.5" font-weight="400" fill="#71717a">Every state is recorded; credits are only spent after a successful print</text>
+<rect x="220" y="110" width="420" height="70" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="139.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">Member uploads a PDF</text>
+<text x="430.0" y="159.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">phone or laptop</text>
+<line x1="430" y1="180" x2="430" y2="216" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<rect x="220" y="216" width="420" height="70" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="245.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">Validate the file</text>
+<text x="430.0" y="265.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">PDF header · size · page count</text>
+<line x1="430" y1="286" x2="430" y2="322" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<rect x="220" y="322" width="420" height="70" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="351.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">Price it from the tariff</text>
+<text x="430.0" y="371.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">pages × copies × rate, duplex discount</text>
+<line x1="430" y1="392" x2="430" y2="428" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<rect x="220" y="428" width="420" height="56" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="450.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">Reserve the credits</text>
+<text x="430.0" y="470.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">quoted amount, held not spent</text>
+<line x1="430" y1="484" x2="430" y2="512" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<polygon points="430,518.0 580.0,566 430,614.0 280.0,566" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.2"/>
+<text x="430" y="562" text-anchor="middle" font-size="12.5" font-weight="600" fill="#18181b">Enough credits?</text>
+<text x="430" y="579" text-anchor="middle" font-size="10.5" font-weight="400" fill="#71717a">balance − held ≥ cost</text>
+<line x1="430" y1="614" x2="430" y2="652" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<text x="452.0" y="631.0" text-anchor="start" font-size="10.5" font-weight="400" fill="#71717a">yes</text>
+<rect x="800" y="534" width="270" height="64" rx="10" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.2"/>
+<text x="935.0" y="560.0" text-anchor="middle" font-size="13" font-weight="600" fill="#18181b">Blocked</text>
+<text x="935.0" y="580.0" text-anchor="middle" font-size="11" font-weight="400" fill="#71717a">member tops up first</text>
+<line x1="580" y1="566" x2="800" y2="566" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="690.0" y="558.0" text-anchor="middle" font-size="10.5" font-weight="400" fill="#71717a">no</text>
+<rect x="220" y="652" width="420" height="62" rx="10" fill="#ecfdf5" stroke="#0f766e" stroke-width="1.2"/>
+<text x="430.0" y="677.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">QUEUED</text>
+<text x="430.0" y="697.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">visible on the desk console</text>
+<line x1="430" y1="714" x2="430" y2="752" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<text x="444.0" y="733.0" text-anchor="start" font-size="10.5" font-weight="400" fill="#71717a">worker claims</text>
+<rect x="220" y="752" width="420" height="62" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="777.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">PRINTING</text>
+<text x="430.0" y="797.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">PDF + options handed to the spooler</text>
+<line x1="430" y1="814" x2="430" y2="852" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<polygon points="430,858.0 590.0,906 430,954.0 270.0,906" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.2"/>
+<text x="430" y="902" text-anchor="middle" font-size="12.5" font-weight="600" fill="#18181b">Printer confirmed?</text>
+<text x="430" y="919" text-anchor="middle" font-size="10.5" font-weight="400" fill="#71717a">spooler reports success</text>
+<line x1="430" y1="954" x2="430" y2="992" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<text x="452.0" y="971.0" text-anchor="start" font-size="10.5" font-weight="400" fill="#71717a">yes</text>
+<rect x="220" y="992" width="420" height="66" rx="10" fill="#ecfdf5" stroke="#0f766e" stroke-width="1.2"/>
+<text x="430.0" y="1019.0" text-anchor="middle" font-size="13.5" font-weight="600" fill="#18181b">PRINTED · credits captured</text>
+<text x="430.0" y="1039.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">one ledger entry, reference job:&lt;id&gt;:capture</text>
+<rect x="800" y="874" width="270" height="64" rx="10" fill="#fef2f2" stroke="#fecaca" stroke-width="1.2"/>
+<text x="935.0" y="900.0" text-anchor="middle" font-size="13" font-weight="600" fill="#18181b">FAILED</text>
+<text x="935.0" y="920.0" text-anchor="middle" font-size="11" font-weight="400" fill="#71717a">hold released, no charge</text>
+<line x1="590" y1="906" x2="800" y2="906" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="695.0" y="898.0" text-anchor="middle" font-size="10.5" font-weight="400" fill="#71717a">no</text>
+<rect x="800" y="968" width="270" height="64" rx="10" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.2"/>
+<text x="935.0" y="994.0" text-anchor="middle" font-size="13" font-weight="600" fill="#18181b">UNKNOWN</text>
+<text x="935.0" y="1014.0" text-anchor="middle" font-size="11" font-weight="400" fill="#71717a">operator checks the tray</text>
+<line x1="800" y1="938" x2="800" y2="968" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<line x1="430" y1="1058" x2="430" y2="1096" stroke="#18181b" stroke-width="1.5" marker-end="url(#b)"/>
+<rect x="200" y="1096" width="460" height="56" rx="10" fill="#ffffff" stroke="#d4d4d8" stroke-width="1.2"/>
+<text x="430.0" y="1118.0" text-anchor="middle" font-size="13" font-weight="600" fill="#18181b">History, statement and reports</text>
+<text x="430.0" y="1138.0" text-anchor="middle" font-size="11.5" font-weight="400" fill="#71717a">member sees it; the dashboard totals it</text>
+<text x="40" y="1160" text-anchor="start" font-size="10.5" font-weight="400" fill="#71717a" font-style="italic">Nothing is charged unless the print succeeds — a failure or a cancellation only releases the reservation.</text>
+</svg>
