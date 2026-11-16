@@ -1,0 +1,173 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Dashboard · ESprints{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_tag %}
+  {% if subscription %}<span class="pill-success ml-1 hidden sm:inline-flex">{{ subscription.plan.name }}</span>
+  {% else %}<span class="pill-warning ml-1 hidden sm:inline-flex">No active plan</span>{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'billing:topup' %}" class="btn-outline btn-sm">Top up</a>
+  <a href="{% url 'printing:job_new' %}" class="btn-primary btn-sm">New print job</a>
+{% endblock %}
+
+{% block content %}
+
+{% if not subscription %}
+  <div class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <span class="pill-warning">No active plan</span>
+    <p class="min-w-0 flex-1 text-[12.5px] leading-relaxed text-amber-900">
+      You need an active subscription before you can print. Ask the society office
+      to activate one for you.
+    </p>
+  </div>
+{% endif %}
+
+<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="card-pad">
+    <p class="stat-label">Available credits</p>
+    <p class="stat-value">{{ account.available_credits|intcomma }}</p>
+    <p class="mt-3 text-[11.5px] font-medium text-zinc-700">Worth {{ account.available_credits|credit_rand }}</p>
+    <p class="mt-0.5 text-[11px] text-zinc-400">
+      {% if account.held_credits %}{{ account.held_credits|intcomma }} credits reserved in the queue{% else %}Nothing reserved right now{% endif %}
+    </p>
+  </div>
+
+  {% include "partials/stat.html" with label="Pages printed" value=pages_printed|intcomma caption="All time" hint="Colour and duplex included" %}
+  {% include "partials/stat.html" with label="Jobs in the queue" value=jobs_queued|intcomma caption="Waiting for the printer" hint="Watch the desk screen" %}
+
+  <div class="card-pad">
+    <p class="stat-label">Subscription</p>
+    {% if subscription %}
+      <p class="stat-value">{{ subscription.days_left }}<span class="ml-1 text-[13px] font-medium text-zinc-400">days left</span></p>
+      <p class="mt-3 text-[11.5px] font-medium text-zinc-700">{{ subscription.plan.name }}</p>
+      <p class="mt-0.5 text-[11px] text-zinc-400">Until {{ subscription.ends_on|date:"j M Y" }}</p>
+    {% else %}
+      <p class="stat-value">—</p>
+      <p class="mt-3 text-[11.5px] font-medium text-zinc-700">Not subscribed</p>
+      <p class="mt-0.5 text-[11px] text-zinc-400">Ask the society office</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="mt-3 grid gap-3 xl:grid-cols-3">
+  <div class="xl:col-span-2">
+    {% include "partials/chart.html" with chart_title="Your printing" chart_subtitle="Pages you printed per day, last 30 days" %}
+  </div>
+
+  <div class="card flex flex-col">
+    <div class="card-header">
+      <h2 class="text-[13px] font-semibold tracking-tight text-zinc-900">Quick actions</h2>
+    </div>
+    <div class="divide-y divide-zinc-100">
+      <a href="{% url 'printing:job_new' %}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-50">
+        <span class="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-white">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[12.5px] font-medium text-zinc-900">Upload a PDF</span>
+          <span class="block text-[11px] text-zinc-500">See the exact credit cost first</span>
+        </span>
+      </a>
+      <a href="{% url 'billing:topup' %}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-50">
+        <span class="grid h-7 w-7 place-items-center rounded-lg bg-zinc-100 text-zinc-700">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[12.5px] font-medium text-zinc-900">Top up credits</span>
+          <span class="block text-[11px] text-zinc-500">Pay by mobile money, get approval</span>
+        </span>
+      </a>
+      <a href="{% url 'credits:history' %}" class="flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-50">
+        <span class="grid h-7 w-7 place-items-center rounded-lg bg-zinc-100 text-zinc-700">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M12 4v16"/></svg>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[12.5px] font-medium text-zinc-900">Credits history</span>
+          <span class="block text-[11px] text-zinc-500">Every movement, with a reference</span>
+        </span>
+      </a>
+      <div class="px-5 py-3.5">
+        <p class="text-[11px] leading-relaxed text-zinc-500">
+          Mono A4 side: <span class="font-semibold text-zinc-700">10 credits</span>.
+          Colour: <span class="font-semibold text-zinc-700">40</span>.
+          Duplex saves 10%.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3 overflow-hidden">
+  <div class="card-header">
+    <div>
+      <h2 class="text-[13px] font-semibold tracking-tight text-zinc-900">Recent jobs</h2>
+      <p class="mt-0.5 text-[11px] text-zinc-500">{{ jobs_total }} submitted · {{ jobs_printed }} printed{% if jobs_failed %} · {{ jobs_failed }} failed{% endif %}</p>
+    </div>
+    <a href="{% url 'printing:job_list' %}" class="btn-outline btn-sm">All jobs</a>
+  </div>
+
+  {% if recent_jobs %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Job</th><th>Document</th><th>Options</th><th>Status</th>
+              <th class="text-right">Pages</th><th class="text-right">Credits</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for job in recent_jobs %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ job.code }}</td>
+              <td class="max-w-[210px] truncate">{{ job.original_name }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ job.summary }}</td>
+              <td><span class="{{ job.status|status_class }}"><i class="dot"></i>{{ job.get_status_display }}</span></td>
+              <td class="text-right tabular-nums">{{ job.page_count }}</td>
+              <td class="text-right tabular-nums font-medium">{{ job.cost_credits|intcomma }}</td>
+              <td class="text-right">
+                <a href="{% url 'printing:job_detail' job.public_id %}" class="btn-ghost btn-sm">Open</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-12 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">No jobs yet</p>
+      <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-zinc-500">
+        Upload a PDF and you will see the exact cost in credits before anything is charged.
+      </p>
+      <a href="{% url 'printing:job_new' %}" class="btn-primary btn-sm mt-4">Upload a PDF</a>
+    </div>
+  {% endif %}
+</div>
+
+<div class="card mt-3 overflow-hidden">
+  <div class="card-header">
+    <h2 class="text-[13px] font-semibold tracking-tight text-zinc-900">Recent credit movements</h2>
+    <a href="{% url 'credits:history' %}" class="btn-outline btn-sm">Full history</a>
+  </div>
+  {% if recent_entries %}
+    <table class="table">
+      <thead><tr><th>When</th><th>What</th><th>Memo</th><th class="text-right">Credits</th></tr></thead>
+      <tbody>
+        {% for entry in recent_entries %}
+          <tr>
+            <td class="text-[12px] text-zinc-500">{{ entry.created_at|date:"j M, H:i" }}</td>
+            <td><span class="pill-neutral">{{ entry.get_kind_display }}</span></td>
+            <td class="max-w-[320px] truncate text-[12px]">{{ entry.memo|default:"—" }}</td>
+            <td class="text-right tabular-nums font-semibold {% if entry.is_credit %}text-emerald-700{% else %}text-zinc-900{% endif %}">
+              {% if entry.is_credit %}+{% endif %}{{ entry.delta_credits|intcomma }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="px-5 py-8 text-center text-[12px] text-zinc-500">No movements yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "layouts/app.html" %}
+{% load ui %}
+
+{% block title %}My details · ESprints{% endblock %}
+{% block page_title %}My details{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="text-[13px] font-semibold tracking-tight">Your details</h2>
+          <p class="mt-0.5 text-[11px] text-zinc-500">The treasurer matches your payments by phone number</p>
+        </div>
+      </div>
+      <form method="post" class="space-y-4 p-5">
+        {% csrf_token %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% for field in form %}
+            <div class="{% if field.name == 'email' or field.name == 'phone' %}sm:col-span-2{% endif %}">
+              <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <a href="{% url 'accounts:home' %}" class="btn-outline">Cancel</a>
+          <button class="btn-primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    <div class="card-pad">
+      <p class="stat-label">Student number</p>
+      <p class="mt-1 font-mono text-[15px] font-semibold">{{ user.student_no }}</p>
+      <p class="mt-3 text-[11px] leading-relaxed text-zinc-500">
+        Your student number is your login. Contact the office if it is wrong.
+      </p>
+    </div>
+    <div class="card-pad">
+      <p class="stat-label">Role</p>
+      <p class="mt-1 text-[13px] font-medium">{{ user.get_role_display }}</p>
+      <p class="mt-3 text-[11px] leading-relaxed text-zinc-500">
+        Accounts are created by the society office. There is no public sign-up.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Plans · ESprints{% endblock %}
+{% block page_title %}Membership plans{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'console:plan_new' %}" class="btn-primary btn-sm">New plan</a>
+{% endblock %}
+
+{% block content %}
+<div class="card overflow-hidden">
+  {% if plans %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Plan</th><th class="text-right">Price</th><th class="text-right">Duration</th>
+              <th class="text-right">Credits granted</th><th class="text-right">Members</th>
+              <th>Status</th><th class="text-right"></th></tr>
+        </thead>
+        <tbody>
+          {% for plan in plans %}
+            <tr>
+              <td class="font-medium text-zinc-900">{{ plan.name }}</td>
+              <td class="text-right tabular-nums">{{ plan.price_rand }}</td>
+              <td class="text-right tabular-nums">{{ plan.duration_days }} days</td>
+              <td class="text-right tabular-nums font-medium">{{ plan.grant_credits|intcomma }}</td>
+              <td class="text-right tabular-nums">{{ plan.subscriber_count }}</td>
+              <td>{% if plan.is_active %}<span class="pill-success">Offered</span>{% else %}<span class="pill-neutral">Retired</span>{% endif %}</td>
+              <td class="text-right"><a href="{% url 'console:plan_edit' plan.pk %}" class="btn-ghost btn-sm">Edit</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-14 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">No plans yet</p>
+      <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-zinc-500">
+        A plan is what a member buys: a price, a duration, and a fixed number of print credits.
+      </p>
+      <a href="{% url 'console:plan_new' %}" class="btn-primary btn-sm mt-4">Create a plan</a>
+    </div>
+  {% endif %}
+</div>
+
+<div class="card-pad mt-3">
+  <p class="stat-label">How the numbers relate</p>
+  <p class="mt-1.5 text-[11.5px] leading-relaxed text-zinc-500">
+    Credits are the print currency: 10 credits = E1.00, and one mono A4 side costs 10 credits.
+    A plan priced at E150.00 that grants 1,000 credits gives the member E100.00 of printing;
+    the remainder is the society's operating margin.
+  </p>
+</div>
+{% endblock %}

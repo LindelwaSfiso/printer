@@ -1,0 +1,89 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}New print job · ESprints{% endblock %}
+{% block page_title %}New print job{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+  <div class="lg:col-span-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="text-[13px] font-semibold tracking-tight">Upload a PDF</h2>
+          <p class="mt-0.5 text-[11px] text-zinc-500">You will see the exact cost before anything is reserved</p>
+        </div>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" class="space-y-4 p-5" novalidate>
+        {% csrf_token %}
+
+        <div>
+          <label class="label" for="{{ form.document.id_for_label }}">{{ form.document.label }}</label>
+          {{ form.document }}
+          <p class="helptext">{{ form.document.help_text }}</p>
+          {% for error in form.document.errors %}<p class="error">{{ error }}</p>{% endfor %}
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% for field in form %}
+            {% if field.name != "document" %}
+              <div>
+                <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="flex items-center justify-between gap-3 border-t border-zinc-100 pt-4">
+          <p class="text-[11px] leading-relaxed text-zinc-500">
+            Credits in your account: <span class="font-semibold text-zinc-800">{{ account.available_credits|intcomma }}</span>
+          </p>
+          <button type="submit" class="btn-primary">Upload and price</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    <div class="card-pad">
+      <p class="stat-label">Tariff</p>
+      <dl class="mt-3 space-y-2 text-[12px]">
+        <div class="flex items-center justify-between">
+          <dt class="text-zinc-500">Mono A4 side</dt>
+          <dd class="font-semibold tabular-nums">{{ tariff.mono_a4_credits }} credits</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-zinc-500">Colour A4 side</dt>
+          <dd class="font-semibold tabular-nums">{{ tariff.colour_a4_credits }} credits</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-zinc-500">A3</dt>
+          <dd class="font-semibold tabular-nums">x{{ tariff.a3_multiplier_percent|add:"0" }}%</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-zinc-500">Duplex saving</dt>
+          <dd class="font-semibold tabular-nums">{{ tariff.duplex_discount_percent }}%</dd>
+        </div>
+        <div class="divider my-2"></div>
+        <div class="flex items-center justify-between">
+          <dt class="text-zinc-500">Minimum charge</dt>
+          <dd class="font-semibold tabular-nums">{{ tariff.minimum_charge_credits }} credits</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="card-pad">
+      <p class="stat-label">Before you upload</p>
+      <ul class="mt-2 space-y-2 text-[11.5px] leading-relaxed text-zinc-500">
+        <li>Only PDF is accepted. In Word use <span class="font-medium text-zinc-700">File &rsaquo; Save as PDF</span>.</li>
+        <li>Up to 20 MB and 200 pages per job.</li>
+        <li>Password-protected files cannot be printed.</li>
+        <li>Nothing is charged until the job prints.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

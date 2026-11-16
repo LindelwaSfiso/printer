@@ -1,0 +1,169 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}{{ job.code }} · ESprints{% endblock %}
+{% block page_title %}Job {{ job.code }}{% endblock %}
+{% block page_tag %}<span class="{{ job.status|status_class }} ml-1"><i class="dot"></i>{{ job.get_status_display }}</span>{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'printing:job_list' %}" class="btn-outline btn-sm">Back to jobs</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+  <div class="space-y-3 lg:col-span-2">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="text-[13px] font-semibold tracking-tight">{{ job.original_name }}</h2>
+          <p class="mt-0.5 text-[11px] text-zinc-500">Submitted {{ job.created_at|date:"j M Y, H:i" }}</p>
+        </div>
+        <span class="{{ job.status|status_class }}"><i class="dot"></i>{{ job.get_status_display }}</span>
+      </div>
+
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-4 p-5 sm:grid-cols-4">
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Pages</dt>
+          <dd class="mt-1 text-[15px] font-semibold tabular-nums">{{ job.page_count }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Copies</dt>
+          <dd class="mt-1 text-[15px] font-semibold tabular-nums">{{ job.copies }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Sides</dt>
+          <dd class="mt-1 text-[15px] font-semibold">{{ job.get_sides_display }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Colour</dt>
+          <dd class="mt-1 text-[15px] font-semibold">{{ job.get_colour_mode_display }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Paper</dt>
+          <dd class="mt-1 text-[15px] font-semibold">{{ job.paper }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Sheets</dt>
+          <dd class="mt-1 text-[15px] font-semibold tabular-nums">{{ job.sheets_estimate }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Credits</dt>
+          <dd class="mt-1 text-[15px] font-semibold tabular-nums">{{ job.cost_credits|intcomma }}</dd>
+        </div>
+        <div>
+          <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Value</dt>
+          <dd class="mt-1 text-[15px] font-semibold">{{ job.cost_rand }}</dd>
+        </div>
+      </dl>
+
+      {% if job.failure_reason %}
+        <div class="mx-5 mb-5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-[12px] leading-relaxed text-red-800">
+          <span class="font-semibold">Why it failed:</span> {{ job.failure_reason }}
+          {% if job.status == "FAILED" %}<span class="block text-[11px] text-red-700">The reserved credits were returned to you.</span>{% endif %}
+        </div>
+      {% endif %}
+
+      {% if job.status == "DRAFT" %}
+        <div class="border-t border-zinc-100 p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-[13px] font-semibold">Confirm and queue this job</p>
+              <p class="mt-0.5 text-[11.5px] text-zinc-500">
+                {{ job.cost_credits|intcomma }} credits will be reserved now and charged only when it prints.
+              </p>
+            </div>
+            <form method="post">
+              {% csrf_token %}
+              <button class="btn-primary">Confirm &mdash; {{ job.cost_credits|intcomma }} credits</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Progress</h2></div>
+      <ol class="space-y-3 p-5">
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-900"></span>
+          <div>
+            <p class="text-[12.5px] font-medium text-zinc-900">Uploaded and priced</p>
+            <p class="text-[11px] text-zinc-500">{{ job.created_at|date:"j M Y, H:i" }}</p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full {% if job.queued_at %}bg-zinc-900{% else %}bg-zinc-200{% endif %}"></span>
+          <div>
+            <p class="text-[12.5px] font-medium {% if job.queued_at %}text-zinc-900{% else %}text-zinc-400{% endif %}">Queued and credits reserved</p>
+            <p class="text-[11px] text-zinc-500">
+              {% if job.queued_at %}
+                {{ job.queued_at|date:"j M Y, H:i" }}
+                {% if queue_position %}· position {{ queue_position }} in the queue{% endif %}
+              {% else %}Waiting for you to confirm{% endif %}
+            </p>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full {% if job.printed_at %}bg-emerald-600{% elif job.failed_at %}bg-red-600{% else %}bg-zinc-200{% endif %}"></span>
+          <div>
+            <p class="text-[12.5px] font-medium {% if job.printed_at %}text-zinc-900{% elif job.failed_at %}text-zinc-900{% else %}text-zinc-400{% endif %}">
+              {% if job.printed_at %}Printed{% elif job.failed_at %}{{ job.get_status_display }}{% else %}Not printed yet{% endif %}
+            </p>
+            <p class="text-[11px] text-zinc-500">
+              {% if job.printed_at %}{{ job.printed_at|date:"j M Y, H:i" }} · {{ job.cost_credits|intcomma }} credits charged
+              {% elif job.failed_at %}{{ job.failed_at|date:"j M Y, H:i" }} · no charge
+              {% else %}You will get the pages at the desk{% endif %}
+            </p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    {% if job.output_file %}
+      <div class="card-pad">
+        <p class="stat-label">Printed output</p>
+        <p class="mt-1 text-[12px] leading-relaxed text-zinc-500">
+          The exact PDF that was sent to the printer, with the cover sheet on page 1.
+        </p>
+        <a href="{% url 'printing:job_output' job.public_id %}" class="btn-outline mt-3 w-full">Download {{ job.code }}.pdf</a>
+      </div>
+    {% endif %}
+
+    <div class="card-pad">
+      <p class="stat-label">Your document</p>
+      <a href="{% url 'printing:job_file' job.public_id %}" class="btn-outline mt-3 w-full">Download original</a>
+    </div>
+
+    <div class="card-pad">
+      <p class="stat-label">Credits</p>
+      <p class="mt-1 text-[15px] font-semibold tabular-nums">{{ account.available_credits|intcomma }}</p>
+      <p class="mt-1 text-[11px] text-zinc-500">available now{% if account.held_credits %} ({{ account.held_credits|intcomma }} reserved){% endif %}</p>
+    </div>
+
+    {% if job.status == "FAILED" or job.status == "EXPIRED" %}
+      <div class="card-pad">
+        <p class="stat-label">Try again</p>
+        <p class="mt-1 text-[11px] leading-relaxed text-zinc-500">This queues the same document again and reserves the credits.</p>
+        <form method="post" action="{% url 'printing:job_retry' job.public_id %}" class="mt-3">
+          {% csrf_token %}
+          <button class="btn-primary w-full">Retry job</button>
+        </form>
+      </div>
+    {% endif %}
+
+    {% if job.status == "DRAFT" or job.status == "QUEUED" %}
+      <div class="card-pad">
+        <p class="stat-label">Cancel</p>
+        <p class="mt-1 text-[11px] leading-relaxed text-zinc-500">Cancelling releases any reserved credits. Nothing is charged.</p>
+        <form method="post" action="{% url 'printing:job_cancel' job.public_id %}" class="mt-3">
+          {% csrf_token %}
+          <button class="btn-outline w-full">Cancel job</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

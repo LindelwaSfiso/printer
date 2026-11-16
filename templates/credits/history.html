@@ -1,0 +1,67 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Credits · ESprints{% endblock %}
+{% block page_title %}Credits &amp; history{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'billing:topup' %}" class="btn-primary btn-sm">Top up</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 sm:grid-cols-3">
+  <div class="card-pad">
+    <p class="stat-label">Available</p>
+    <p class="stat-value">{{ account.available_credits|intcomma }}</p>
+    <p class="mt-3 text-[11.5px] font-medium text-zinc-700">Worth {{ account.available_credits|credit_rand }}</p>
+  </div>
+  <div class="card-pad">
+    <p class="stat-label">Reserved for the queue</p>
+    <p class="stat-value">{{ account.held_credits|intcomma }}</p>
+    <p class="mt-3 text-[11.5px] text-zinc-500">Released if a job fails or is cancelled</p>
+  </div>
+  <div class="card-pad">
+    <p class="stat-label">Balance</p>
+    <p class="stat-value">{{ account.balance_credits|intcomma }}</p>
+    <p class="mt-3 text-[11.5px] text-zinc-500">Available plus reserved</p>
+  </div>
+</div>
+
+<div class="card mt-3 overflow-hidden">
+  <div class="card-header">
+    <div>
+      <h2 class="text-[13px] font-semibold tracking-tight">Statement</h2>
+      <p class="mt-0.5 text-[11px] text-zinc-500">Every movement, with the reference that makes it auditable</p>
+    </div>
+  </div>
+
+  {% if entries %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>When</th><th>Kind</th><th>Detail</th><th>Reference</th>
+              <th class="text-right">Change</th><th class="text-right">Balance</th></tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr>
+              <td class="whitespace-nowrap text-[12px] text-zinc-500">{{ entry.created_at|date:"j M Y, H:i" }}</td>
+              <td><span class="pill-neutral">{{ entry.get_kind_display }}</span></td>
+              <td class="max-w-70 truncate text-[12px]">{{ entry.memo|default:"—" }}</td>
+              <td class="font-mono text-[10.5px] text-zinc-400">{{ entry.reference }}</td>
+              <td class="text-right tabular-nums font-semibold {% if entry.is_credit %}text-emerald-700{% else %}text-zinc-900{% endif %}">
+                {% if entry.is_credit %}+{% endif %}{{ entry.delta_credits|intcomma }}
+              </td>
+              <td class="text-right tabular-nums text-zinc-500">{{ entry.balance_after|intcomma }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="px-5 py-12 text-center text-[12px] text-zinc-500">
+      No movements yet. Activating a plan or an approved top-up appears here.
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Print queue · ESprints{% endblock %}
+{% block page_title %}Print queue{% endblock %}
+{% block page_tag %}<span class="pill-neutral ml-1">{{ queue_depth }} waiting</span>{% endblock %}
+
+{% block topbar_actions %}
+  <form method="post" action="{% url 'console:queue_process' %}">
+    {% csrf_token %}
+    <button class="btn-primary btn-sm">Print the queue</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3 grid gap-3 sm:grid-cols-3">
+  <div class="card-pad">
+    <p class="stat-label">Printer</p>
+    <p class="mt-1 text-[13px] font-semibold">{{ printer.name }}</p>
+    <p class="mt-1"><span class="{% if printer.ok %}pill-success{% else %}pill-danger{% endif %}">{{ printer.detail }}</span></p>
+    <p class="mt-2 text-[10.5px] text-zinc-400">Backend: {{ backend }}</p>
+  </div>
+  <div class="card-pad">
+    <p class="stat-label">Waiting</p>
+    <p class="stat-value">{{ queue_depth }}</p>
+    <p class="mt-3 text-[11px] text-zinc-500">Credits are already reserved</p>
+  </div>
+  <div class="card-pad">
+    <p class="stat-label">Failed</p>
+    <p class="stat-value">{{ failures|length }}</p>
+    <p class="mt-3 text-[11px] text-zinc-500">Credits returned automatically</p>
+  </div>
+</div>
+
+<div class="card overflow-hidden">
+  <div class="card-header">
+    <div>
+      <h2 class="text-[13px] font-semibold tracking-tight">Waiting to print</h2>
+      <p class="mt-0.5 text-[11px] text-zinc-500">Oldest first. "Print the queue" processes up to ten jobs.</p>
+    </div>
+  </div>
+  {% if queued %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>#</th><th>Job</th><th>Student</th><th>Document</th><th>Options</th>
+              <th class="text-right">Pages</th><th class="text-right">Credits</th><th class="text-right"></th></tr>
+        </thead>
+        <tbody>
+          {% for job in queued %}
+            <tr>
+              <td class="text-[11px] tabular-nums text-zinc-400">{{ forloop.counter }}</td>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ job.code }}</td>
+              <td class="text-[12px]">{{ job.member.student_no }}</td>
+              <td class="max-w-[190px] truncate">{{ job.original_name }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ job.summary }}</td>
+              <td class="text-right tabular-nums">{{ job.page_count }}</td>
+              <td class="text-right tabular-nums font-medium">{{ job.cost_credits|intcomma }}</td>
+              <td class="text-right">
+                <form method="post" action="{% url 'console:queue_cancel' job.public_id %}">
+                  {% csrf_token %}
+                  <button class="btn-ghost btn-sm">Cancel</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-12 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">The queue is empty</p>
+      <p class="mt-1 text-[11.5px] text-zinc-500">Jobs appear here as soon as members confirm them.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% if failures %}
+<div class="card mt-3 overflow-hidden">
+  <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Failed jobs</h2></div>
+  <div class="overflow-x-auto">
+    <table class="table">
+      <thead><tr><th>Job</th><th>Student</th><th>Reason</th><th>When</th><th class="text-right"></th></tr></thead>
+      <tbody>
+        {% for job in failures %}
+          <tr>
+            <td class="font-mono text-[12px]">{{ job.code }}</td>
+            <td class="text-[12px]">{{ job.member.student_no }}</td>
+            <td class="max-w-[380px] truncate text-[11.5px] text-red-700">{{ job.failure_reason|default:"—" }}</td>
+            <td class="whitespace-nowrap text-[11.5px] text-zinc-500">{{ job.failed_at|date:"j M, H:i"|default:"—" }}</td>
+            <td class="text-right">
+              <form method="post" action="{% url 'console:queue_retry' job.public_id %}">
+                {% csrf_token %}
+                <button class="btn-outline btn-sm">Retry</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mt-3 overflow-hidden">
+  <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Recently printed</h2></div>
+  {% if recent %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead><tr><th>Job</th><th>Student</th><th>Document</th><th class="text-right">Pages</th>
+                   <th class="text-right">Credits</th><th>Printed</th><th class="text-right"></th></tr></thead>
+        <tbody>
+          {% for job in recent %}
+            <tr>
+              <td class="font-mono text-[12px]">{{ job.code }}</td>
+              <td class="text-[12px]">{{ job.member.student_no }}</td>
+              <td class="max-w-[220px] truncate text-[11.5px]">{{ job.original_name }}</td>
+              <td class="text-right tabular-nums">{{ job.page_count }}</td>
+              <td class="text-right tabular-nums">{{ job.cost_credits|intcomma }}</td>
+              <td class="whitespace-nowrap text-[11.5px] text-zinc-500">{{ job.printed_at|date:"j M, H:i" }}</td>
+              <td class="text-right">
+                {% if job.output_file %}
+                  <a href="{% url 'printing:job_output' job.public_id %}" class="btn-ghost btn-sm">Output</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="px-5 py-8 text-center text-[12px] text-zinc-500">Nothing printed yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

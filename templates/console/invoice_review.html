@@ -1,0 +1,135 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Review {{ invoice.reference }} · ESprints{% endblock %}
+{% block page_title %}Review {{ invoice.reference }}{% endblock %}
+{% block page_tag %}<span class="{{ invoice.status|status_class }} ml-1"><i class="dot"></i>{{ invoice.get_status_display }}</span>{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'console:invoices' %}" class="btn-outline btn-sm">All invoices</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-3">
+  <div class="space-y-3 lg:col-span-2">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="text-[13px] font-semibold tracking-tight">What the member claims</h2>
+          <p class="mt-0.5 text-[11px] text-zinc-500">Submitted {{ invoice.submitted_at|date:"j M Y, H:i"|default:"—" }}</p>
+        </div>
+        <p class="text-[20px] font-semibold tracking-tight">{{ invoice.amount_rand }}</p>
+      </div>
+
+      <div class="space-y-4 p-5">
+        <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Transaction ID to verify</p>
+          <p class="mt-1.5 break-all font-mono text-[17px] font-semibold tracking-tight text-zinc-900">
+            {{ invoice.momo_txn_id|default:"Not provided" }}
+          </p>
+          {% if invoice.superseded_txn_ids %}
+            <p class="mt-2 text-[10.5px] text-zinc-500">
+              Earlier attempts: {% for txn in invoice.superseded_txn_ids %}<span class="font-mono">{{ txn }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}
+            </p>
+          {% endif %}
+        </div>
+
+        <dl class="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+          <div>
+            <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Credits</dt>
+            <dd class="mt-1 text-[14px] font-semibold tabular-nums">{{ invoice.credits|intcomma }}</dd>
+          </div>
+          <div>
+            <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Paid from</dt>
+            <dd class="mt-1 text-[14px] font-semibold">{{ invoice.payer_phone|default:"—" }}</dd>
+          </div>
+          <div>
+            <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Profile phone</dt>
+            <dd class="mt-1 text-[14px] font-semibold">{{ member.phone|default:"—" }}</dd>
+          </div>
+          <div>
+            <dt class="text-[11px] font-medium uppercase tracking-wide text-zinc-400">Attempts</dt>
+            <dd class="mt-1 text-[14px] font-semibold tabular-nums">{{ invoice.attempts }}</dd>
+          </div>
+        </dl>
+
+        {% if invoice.proof_file %}
+          <a href="{% url 'billing:invoice_proof' invoice.reference %}" class="btn-outline btn-sm">Open uploaded proof</a>
+        {% else %}
+          <p class="text-[11px] text-zinc-400">No screenshot uploaded.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">This member's other invoices</h2></div>
+      {% if previous %}
+        <table class="table">
+          <thead><tr><th>Reference</th><th class="text-right">Amount</th><th>Status</th><th>Decided</th></tr></thead>
+          <tbody>
+            {% for other in previous %}
+              <tr>
+                <td class="font-mono text-[11.5px]">{{ other.reference }}</td>
+                <td class="text-right tabular-nums">{{ other.amount_rand }}</td>
+                <td><span class="{{ other.status|status_class }}"><i class="dot"></i>{{ other.get_status_display }}</span></td>
+                <td class="text-[11.5px] text-zinc-500">{{ other.decided_at|date:"j M Y"|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="px-5 py-8 text-center text-[12px] text-zinc-500">First invoice from this member.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    <div class="card-pad">
+      <p class="stat-label">After approval</p>
+      <p class="mt-1 text-[18px] font-semibold tabular-nums">{{ account.available_credits|intcomma }} &rarr; {{ account.available_credits|add:invoice.credits|intcomma }}</p>
+      <p class="mt-1 text-[11px] text-zinc-500">credits available</p>
+    </div>
+
+    {% if invoice.status == "AWAITING_APPROVAL" %}
+      <div class="card">
+        <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Decision</h2></div>
+        <div class="space-y-3 p-5">
+          <form method="post" action="{% url 'console:invoice_approve' invoice.reference %}">
+            {% csrf_token %}
+            <button class="btn-primary w-full">Approve and add {{ invoice.credits|intcomma }} credits</button>
+          </form>
+
+          <div class="divider"></div>
+
+          <form method="post" action="{% url 'console:invoice_reject' invoice.reference %}" class="space-y-2">
+            {% csrf_token %}
+            <label class="label" for="id_reason">Reject with a reason</label>
+            <input type="text" name="reason" id="id_reason" maxlength="200" required class="input"
+                   placeholder="e.g. No matching payment on the statement">
+            <button class="btn-outline w-full">Reject invoice</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="card-pad">
+        <p class="stat-label">Already decided</p>
+        <p class="mt-1.5 text-[12px] leading-relaxed text-zinc-600">
+          {{ invoice.get_status_display }}{% if invoice.decided_by %} by {{ invoice.decided_by.display_name }}{% endif %}
+          on {{ invoice.decided_at|date:"j M Y, H:i" }}.
+        </p>
+        {% if invoice.rejection_reason %}
+          <p class="mt-2 text-[11.5px] text-red-700">Reason: {{ invoice.rejection_reason }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="card-pad">
+      <p class="stat-label">Member</p>
+      <p class="mt-1 text-[13px] font-semibold">{{ member.display_name }}</p>
+      <p class="text-[11.5px] text-zinc-500">{{ member.student_no }}</p>
+      <a href="{% url 'console:member_detail' member.pk %}" class="btn-outline btn-sm mt-3 w-full">Open member</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+# Core
+Django>=6.1,<6.2
+pypdf>=6,<7
+reportlab>=4          # job cover sheet (pulls in pillow)
+python-dotenv>=1.0
+whitenoise>=6.8       # serves static files in production
+
+# Production only: pure-Python WSGI server that runs on Windows (gunicorn does not).
+# Install it on the machine that will serve the site:
+#   pip install "waitress>=3.0"

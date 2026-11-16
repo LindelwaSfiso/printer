@@ -1,0 +1,55 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}All jobs · ESprints{% endblock %}
+{% block page_title %}All jobs{% endblock %}
+
+{% block topbar_actions %}
+  <a href="?{% if status %}status={{ status }}&{% endif %}{% if query %}q={{ query }}&{% endif %}export=csv" class="btn-outline btn-sm">Export CSV</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-3 flex flex-wrap items-center gap-2">
+  <input type="search" name="q" value="{{ query }}" placeholder="Job code, student number or file"
+         class="input w-[280px]">
+  <select name="status" class="input select w-[180px]">
+    <option value="">Every status</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn-outline">Filter</button>
+  {% if query or status %}<a href="{% url 'console:jobs' %}" class="btn-ghost">Clear</a>{% endif %}
+  <span class="ml-auto text-[11.5px] text-zinc-500">{{ jobs|length }} shown</span>
+</form>
+
+<div class="card overflow-hidden">
+  {% if jobs %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Job</th><th>Student</th><th>Document</th><th>Options</th><th>Status</th>
+              <th class="text-right">Pages</th><th class="text-right">Credits</th><th>Created</th><th class="text-right"></th></tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ job.code }}</td>
+              <td class="text-[12px]">{{ job.member.student_no }}</td>
+              <td class="max-w-[200px] truncate text-[12px]">{{ job.original_name }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ job.summary }}</td>
+              <td><span class="{{ job.status|status_class }}"><i class="dot"></i>{{ job.get_status_display }}</span></td>
+              <td class="text-right tabular-nums">{{ job.page_count }}</td>
+              <td class="text-right tabular-nums font-medium">{{ job.cost_credits|intcomma }}</td>
+              <td class="whitespace-nowrap text-[11.5px] text-zinc-500">{{ job.created_at|date:"j M, H:i" }}</td>
+              <td class="text-right"><a href="{% url 'printing:job_detail' job.public_id %}" class="btn-ghost btn-sm">Open</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="px-5 py-14 text-center text-[12.5px] text-zinc-500">No jobs match that filter.</p>
+  {% endif %}
+</div>
+{% endblock %}

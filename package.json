@@ -1,0 +1,14 @@
+{
+  "name": "esprints-ui",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ESprints UI build (Tailwind CSS v4)",
+  "scripts": {
+    "dev": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --watch",
+    "build": "tailwindcss -i ./static/src/input.css -o ./static/css/app.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4",
+    "@tailwindcss/cli": "^4"
+  }
+}

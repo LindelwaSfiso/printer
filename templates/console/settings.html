@@ -1,0 +1,75 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Settings · ESprints{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="grid gap-3 lg:grid-cols-2">
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="text-[13px] font-semibold tracking-tight">Printing</h2>
+        <p class="mt-0.5 text-[11px] text-zinc-500">Where the queue sends finished jobs</p>
+      </div>
+      <span class="{% if printer.ok %}pill-success{% else %}pill-danger{% endif %}">{{ printer.detail }}</span>
+    </div>
+    <dl class="space-y-2.5 p-5 text-[12.5px]">
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Backend</dt><dd class="font-mono">{{ backend }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Queue / printer name</dt><dd class="font-medium">{{ printer.name }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Output folder</dt><dd class="font-mono text-[11px]">private_media/printout/</dd></div>
+    </dl>
+    <p class="border-t border-zinc-100 px-5 py-3 text-[11px] leading-relaxed text-zinc-500">
+      Currently <span class="font-semibold">printing to PDF</span>: each job is rendered with its
+      cover sheet into the output folder. Switch <span class="font-mono">PRINT_BACKEND</span> in
+      <span class="font-mono">.env</span> to <span class="font-mono">windows</span> or
+      <span class="font-mono">cups</span> to drive a real printer.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="text-[13px] font-semibold tracking-tight">Tariff</h2>
+        <p class="mt-0.5 text-[11px] text-zinc-500">What one printed side costs, in credits</p>
+      </div>
+      <span class="pill-neutral">{{ credits_per_rand }} credits = E1</span>
+    </div>
+    <dl class="space-y-2.5 p-5 text-[12.5px]">
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Mono A4 side</dt><dd class="font-semibold tabular-nums">{{ tariff.mono_a4_credits }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Colour A4 side</dt><dd class="font-semibold tabular-nums">{{ tariff.colour_a4_credits }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">A3 multiplier</dt><dd class="font-semibold tabular-nums">{{ tariff.a3_multiplier_percent }}%</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Duplex discount</dt><dd class="font-semibold tabular-nums">{{ tariff.duplex_discount_percent }}%</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Minimum charge</dt><dd class="font-semibold tabular-nums">{{ tariff.minimum_charge_credits }}</dd></div>
+    </dl>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="text-[13px] font-semibold tracking-tight">Payments</h2>
+      <a href="{% url 'billing:topup' %}" class="btn-ghost btn-sm">See the member view</a>
+    </div>
+    <dl class="space-y-2.5 p-5 text-[12.5px]">
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Mobile-money number</dt><dd class="font-mono font-medium">{{ society_momo }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Account name</dt><dd class="font-medium">{{ society_momo_name }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Top-up range</dt><dd class="tabular-nums">{{ topup_min|rands }} &ndash; {{ topup_max|rands }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Invoice lifetime</dt><dd class="tabular-nums">{{ invoice_ttl }} hours</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Job hold expiry</dt><dd class="tabular-nums">{{ job_expiry }} hours</dd></div>
+    </dl>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Environment</h2></div>
+    <dl class="space-y-2.5 p-5 text-[12.5px]">
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Debug</dt><dd>{% if debug %}<span class="pill-warning">On (development)</span>{% else %}<span class="pill-success">Off (production)</span>{% endif %}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Email</dt><dd class="max-w-[240px] truncate font-mono text-[11px]">{{ email_backend }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-zinc-500">Django admin</dt><dd><span class="pill-neutral">Not used</span></dd></div>
+    </dl>
+    <p class="border-t border-zinc-100 px-5 py-3 text-[11px] leading-relaxed text-zinc-500">
+      Settings come from <span class="font-mono">.env</span> so they can change without editing code.
+      Charge the tariff in code or the database, never in the template.
+    </p>
+  </div>
+</div>
+{% endblock %}

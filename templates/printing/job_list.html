@@ -1,0 +1,53 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}My print jobs · ESprints{% endblock %}
+{% block page_title %}My print jobs{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'printing:job_new' %}" class="btn-primary btn-sm">New print job</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3 flex flex-wrap items-center gap-1.5">
+  <a href="{% url 'printing:job_list' %}" class="btn-outline btn-sm {% if not active_status %}bg-zinc-100{% endif %}">All ({{ counts.all }})</a>
+  <a href="?status=QUEUED" class="btn-outline btn-sm {% if active_status == 'QUEUED' %}bg-zinc-100{% endif %}">Queued ({{ counts.queued }})</a>
+  <a href="?status=PRINTED" class="btn-outline btn-sm {% if active_status == 'PRINTED' %}bg-zinc-100{% endif %}">Printed ({{ counts.printed }})</a>
+  <a href="?status=FAILED" class="btn-outline btn-sm {% if active_status == 'FAILED' %}bg-zinc-100{% endif %}">Failed ({{ counts.failed }})</a>
+</div>
+
+<div class="card overflow-hidden">
+  {% if jobs %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Job</th><th>Document</th><th>Options</th><th>Status</th>
+              <th class="text-right">Pages</th><th class="text-right">Credits</th><th>Submitted</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ job.code }}</td>
+              <td class="max-w-[200px] truncate">{{ job.original_name }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ job.summary }}</td>
+              <td><span class="{{ job.status|status_class }}"><i class="dot"></i>{{ job.get_status_display }}</span></td>
+              <td class="text-right tabular-nums">{{ job.page_count }}</td>
+              <td class="text-right tabular-nums font-medium">{{ job.cost_credits|intcomma }}</td>
+              <td class="whitespace-nowrap text-[12px] text-zinc-500">{{ job.created_at|date:"j M, H:i" }}</td>
+              <td class="text-right"><a href="{% url 'printing:job_detail' job.public_id %}" class="btn-ghost btn-sm">Open</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-14 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">Nothing here yet</p>
+      <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-zinc-500">
+        Upload a PDF to get a price. You only pay when it actually prints.
+      </p>
+      <a href="{% url 'printing:job_new' %}" class="btn-primary btn-sm mt-4">Upload a PDF</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

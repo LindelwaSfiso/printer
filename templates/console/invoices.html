@@ -1,0 +1,99 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Invoices · ESprints{% endblock %}
+{% block page_title %}Top-up invoices{% endblock %}
+{% block page_tag %}<span class="pill-warning ml-1">{{ awaiting|length }} awaiting</span>{% endblock %}
+
+{% block content %}
+<div class="card overflow-hidden">
+  <div class="card-header">
+    <div>
+      <h2 class="text-[13px] font-semibold tracking-tight">Awaiting your approval</h2>
+      <p class="mt-0.5 text-[11px] text-zinc-500">Match the transaction ID against the mobile-money statement before approving</p>
+    </div>
+  </div>
+
+  {% if awaiting %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Reference</th><th>Member</th><th class="text-right">Amount</th><th class="text-right">Credits</th>
+              <th>Transaction ID</th><th>Phone</th><th>Submitted</th><th class="text-right"></th></tr>
+        </thead>
+        <tbody>
+          {% for invoice in awaiting %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ invoice.reference }}</td>
+              <td>
+                <p class="font-medium text-zinc-900">{{ invoice.member.display_name }}</p>
+                <p class="text-[11px] text-zinc-500">{{ invoice.member.student_no }}</p>
+              </td>
+              <td class="text-right tabular-nums font-medium">{{ invoice.amount_rand }}</td>
+              <td class="text-right tabular-nums">{{ invoice.credits|intcomma }}</td>
+              <td class="font-mono text-[11.5px]">{{ invoice.momo_txn_id|default:"—" }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ invoice.payer_phone|default:"—" }}</td>
+              <td class="whitespace-nowrap text-[12px] text-zinc-500">{{ invoice.submitted_at|date:"j M, H:i"|default:"—" }}</td>
+              <td class="text-right">
+                <a href="{% url 'console:invoice_review' invoice.reference %}" class="btn-primary btn-sm">Review</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-10 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">Nothing to approve</p>
+      <p class="mt-1 text-[11.5px] text-zinc-500">Submitted invoices will appear here.</p>
+    </div>
+  {% endif %}
+</div>
+
+<div class="mt-3 grid gap-3 lg:grid-cols-2">
+  <div class="card overflow-hidden">
+    <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Open but unpaid</h2></div>
+    {% if open_unpaid %}
+      <table class="table">
+        <thead><tr><th>Reference</th><th>Member</th><th class="text-right">Amount</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for invoice in open_unpaid %}
+            <tr>
+              <td class="font-mono text-[11.5px]">{{ invoice.reference }}</td>
+              <td class="text-[12px]">{{ invoice.member.student_no }}</td>
+              <td class="text-right tabular-nums">{{ invoice.amount_rand }}</td>
+              <td class="text-[11.5px] text-zinc-500">{{ invoice.created_at|date:"j M" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="px-5 py-8 text-center text-[12px] text-zinc-500">No open invoices.</p>
+    {% endif %}
+  </div>
+
+  <div class="card overflow-hidden">
+    <div class="card-header"><h2 class="text-[13px] font-semibold tracking-tight">Recently decided</h2></div>
+    {% if decided %}
+      <table class="table">
+        <thead><tr><th>Reference</th><th>Member</th><th class="text-right">Amount</th><th>Status</th><th>By</th></tr></thead>
+        <tbody>
+          {% for invoice in decided %}
+            <tr>
+              <td class="font-mono text-[11.5px]">
+                <a href="{% url 'console:invoice_review' invoice.reference %}" class="hover:underline">{{ invoice.reference }}</a>
+              </td>
+              <td class="text-[12px]">{{ invoice.member.student_no }}</td>
+              <td class="text-right tabular-nums">{{ invoice.amount_rand }}</td>
+              <td><span class="{{ invoice.status|status_class }}"><i class="dot"></i>{{ invoice.get_status_display }}</span></td>
+              <td class="text-[11.5px] text-zinc-500">{{ invoice.decided_by.student_no|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="px-5 py-8 text-center text-[12px] text-zinc-500">Nothing decided yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}Members · ESprints{% endblock %}
+{% block page_title %}Members{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'console:member_new' %}" class="btn-primary btn-sm">Add member</a>
+{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-3 flex flex-wrap items-center gap-2">
+  <div class="relative">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search student number, name or email"
+           class="input w-[320px] pl-8">
+    <svg class="absolute left-2.5 top-2.5 text-zinc-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  </div>
+  <button class="btn-outline">Search</button>
+  {% if query %}<a href="{% url 'console:members' %}" class="btn-ghost">Clear</a>{% endif %}
+  <span class="ml-auto text-[11.5px] text-zinc-500">{{ members|length }} member{{ members|length|pluralize }}</span>
+</form>
+
+<div class="card overflow-hidden">
+  {% if members %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Student</th><th>Name</th><th>Phone</th><th>Plan</th>
+              <th class="text-right">Credits</th><th>Access</th><th class="text-right"></th></tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+            {% with sub=member.active_subscription account=member.credit_account %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ member.student_no }}</td>
+              <td>
+                <p class="font-medium text-zinc-900">{{ member.display_name }}</p>
+                <p class="text-[11px] text-zinc-500">{{ member.email|default:"no email on file" }}</p>
+              </td>
+              <td class="text-[12px]">{{ member.phone|default:"—" }}</td>
+              <td>
+                {% if sub %}
+                  <span class="pill-success">{{ sub.plan.name }}</span>
+                  <p class="mt-1 text-[10.5px] text-zinc-400">ends {{ sub.ends_on|date:"j M Y" }}</p>
+                {% else %}
+                  <span class="pill-neutral">No plan</span>
+                {% endif %}
+              </td>
+              <td class="text-right tabular-nums font-medium">
+                {% if account %}{{ account.available_credits|intcomma }}{% else %}0{% endif %}
+              </td>
+              <td>
+                {% if not member.is_active %}<span class="pill-danger">Disabled</span>
+                {% elif not member.invitation_accepted_at %}<span class="pill-warning">Invited</span>
+                {% else %}<span class="pill-neutral">Active</span>{% endif %}
+              </td>
+              <td class="text-right">
+                <a href="{% url 'console:member_detail' member.pk %}" class="btn-ghost btn-sm">Open</a>
+              </td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-14 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">{% if query %}No members match "{{ query }}"{% else %}No members yet{% endif %}</p>
+      <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-zinc-500">
+        Add a member and they receive an email with a link to choose their password.
+      </p>
+      <a href="{% url 'console:member_new' %}" class="btn-primary btn-sm mt-4">Add member</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% with current=request.resolver_match.view_name %}
+<aside class="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-zinc-200 bg-white lg:flex">
+
+  <div class="flex items-center justify-between px-3 py-3">
+    <a href="{% url 'core:home' %}" class="flex items-center gap-2">
+      <span class="grid h-6 w-6 place-items-center rounded-md bg-zinc-900 text-[9px] font-bold tracking-tight text-white">ES</span>
+      <span class="text-[13px] font-semibold tracking-tight text-zinc-900">ESprints</span>
+    </a>
+    <span class="grid h-6 w-6 place-items-center rounded-md border border-zinc-200 text-zinc-400">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </span>
+  </div>
+
+  <div class="px-2.5 pb-1">
+    {% if user.is_staff %}
+      <a href="{% url 'console:member_new' %}" class="btn-pill w-full justify-start">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Quick create
+      </a>
+    {% else %}
+      <a href="{% url 'printing:job_new' %}" class="btn-pill w-full justify-start">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New print job
+      </a>
+    {% endif %}
+  </div>
+
+  <nav class="no-scrollbar mt-2 flex-1 overflow-y-auto px-2 pb-2">
+    {% if user.is_staff %}
+      <a href="{% url 'console:dashboard' %}" class="sidebar-link {% if current == 'console:dashboard' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </a>
+
+      <div class="sidebar-section">Operations</div>
+      <a href="{% url 'console:queue' %}" class="sidebar-link {% if current == 'console:queue' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        Print queue
+        {% if staff_queue_depth %}<span class="ml-auto rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-800">{{ staff_queue_depth }}</span>{% endif %}
+      </a>
+      <a href="{% url 'console:invoices' %}" class="sidebar-link {% if current == 'console:invoices' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+        Invoices
+        {% if staff_pending_invoices %}<span class="ml-auto rounded-full bg-red-100 px-1.5 text-[10px] font-bold text-red-700">{{ staff_pending_invoices }}</span>{% endif %}
+      </a>
+      <a href="{% url 'console:jobs' %}" class="sidebar-link {% if current == 'console:jobs' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M8 16h8v4H8z"/></svg>
+        All jobs
+      </a>
+
+      <div class="sidebar-section">Society</div>
+      <a href="{% url 'console:members' %}" class="sidebar-link {% if current == 'console:members' or current == 'console:member_new' or current == 'console:member_detail' or current == 'console:member_edit' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 2.7-5 6-5s6 2 6 5"/><path d="M17 11a3 3 0 100-6"/><path d="M18 20c0-2-.7-3.6-2-4.6"/></svg>
+        Members
+      </a>
+      <a href="{% url 'console:plans' %}" class="sidebar-link {% if current == 'console:plans' or current == 'console:plan_new' or current == 'console:plan_edit' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16v4H4z"/><path d="M4 13h10v6H4z"/><path d="M17 13h3v6h-3z"/></svg>
+        Plans
+      </a>
+    {% else %}
+      <a href="{% url 'accounts:home' %}" class="sidebar-link {% if current == 'accounts:home' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </a>
+
+      <div class="sidebar-section">Printing</div>
+      <a href="{% url 'printing:job_list' %}" class="sidebar-link {% if current == 'printing:job_list' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9V4h12v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M8 16h8v4H8z"/></svg>
+        My print jobs
+      </a>
+      <a href="{% url 'credits:history' %}" class="sidebar-link {% if current == 'credits:history' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h5M9.5 14h5"/></svg>
+        Credits &amp; history
+      </a>
+      <a href="{% url 'billing:topup' %}" class="sidebar-link {% if current == 'billing:topup' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
+        Top up
+      </a>
+
+      <div class="sidebar-section">Account</div>
+      <a href="{% url 'billing:invoice_list' %}" class="sidebar-link {% if current == 'billing:invoice_list' or current == 'billing:invoice_detail' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+        My invoices
+      </a>
+      <a href="{% url 'accounts:profile' %}" class="sidebar-link {% if current == 'accounts:profile' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/></svg>
+        My details
+      </a>
+    {% endif %}
+  </nav>
+
+  <div class="border-t border-zinc-100 p-2">
+    {% if user.is_staff %}
+      <a href="{% url 'console:settings' %}" class="sidebar-link {% if current == 'console:settings' %}sidebar-link-active{% endif %}">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        Settings
+      </a>
+    {% endif %}
+
+    <div class="mt-1 flex items-center gap-2 rounded-lg px-1.5 py-1.5">
+      <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-zinc-900 text-[10px] font-bold text-white">{{ user.initials }}</span>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-[12px] font-semibold leading-tight text-zinc-900">{{ user.display_name }}</p>
+        <p class="truncate text-[10.5px] leading-tight text-zinc-400">{{ user.student_no }}</p>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button class="grid h-6 w-6 place-items-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" title="Sign out">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 12H4M9 7l-5 5 5 5"/><path d="M14 4h5v16h-5"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</aside>
+{% endwith %}

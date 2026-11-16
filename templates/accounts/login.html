@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Sign in · ESprints{% endblock %}
+
+{% block body %}
+<div class="grid min-h-screen place-items-center bg-zinc-100 px-4 py-10">
+  <div class="w-full max-w-220">
+
+    <div class="grid overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-12px_rgba(0,0,0,0.12)] md:grid-cols-2">
+
+      {# ---- form panel ------------------------------------------------- #}
+      <div class="px-8 py-10 sm:px-12">
+        <div class="flex items-center gap-2">
+          <span class="grid h-7 w-7 place-items-center rounded-lg bg-zinc-900 text-[10px] font-bold tracking-tight text-white">ES</span>
+          <span class="text-[13px] font-semibold tracking-tight text-zinc-900">ESprints</span>
+        </div>
+
+        <h1 class="mt-8 text-[26px] font-bold leading-tight tracking-tight text-zinc-900">Welcome back</h1>
+        <p class="mt-1.5 text-[13px] text-zinc-500">Sign in to your print account.</p>
+
+        {% if form.non_field_errors %}
+          <div class="mt-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] text-red-800">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" class="mt-6 space-y-4" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+
+          <div>
+            <label class="label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% for error in form.username.errors %}<p class="error">{{ error }}</p>{% endfor %}
+          </div>
+
+          <div>
+            <div class="flex items-baseline justify-between">
+              <label class="label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+              <span class="text-[11px] text-zinc-400">Set by invitation</span>
+            </div>
+            {{ form.password }}
+            {% for error in form.password.errors %}<p class="error">{{ error }}</p>{% endfor %}
+          </div>
+
+          <button type="submit" class="btn-primary w-full">Sign in</button>
+        </form>
+
+        <p class="mt-6 text-center text-[12px] leading-relaxed text-zinc-500">
+          Accounts are created by the society office.
+          <br>Check your student email for the invitation link.
+        </p>
+      </div>
+
+      {# ---- illustration panel ----------------------------------------- #}
+      <div class="relative hidden border-l border-zinc-100 bg-zinc-50 md:block">
+        <div class="absolute inset-0 opacity-[0.55]"
+             style="background-image: radial-gradient(circle at 1px 1px, #d4d4d8 1px, transparent 0); background-size: 22px 22px;"></div>
+
+        <div class="relative flex h-full flex-col justify-between p-10">
+          <div class="flex justify-center">
+            <span class="grid h-14 w-14 place-items-center rounded-2xl bg-white text-[13px] font-bold text-zinc-900 shadow-sm ring-1 ring-zinc-200">ES</span>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <p class="text-[15px] font-semibold leading-snug tracking-tight text-zinc-900">
+                Print from your phone.<br>Collect at the department desk.
+              </p>
+              <p class="mt-2 text-[12px] leading-relaxed text-zinc-500">
+                Upload a PDF, see the exact cost in credits, and pick it up
+                when it is ready.
+              </p>
+            </div>
+
+            <ul class="space-y-2.5 text-[12px] text-zinc-600">
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] font-bold text-zinc-900 ring-1 ring-zinc-200">1</span>
+                Upload a PDF and choose colour, sides and copies
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] font-bold text-zinc-900 ring-1 ring-zinc-200">2</span>
+                Pay for credits by mobile money, approved by the treasurer
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="mt-0.5 grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] font-bold text-zinc-900 ring-1 ring-zinc-200">3</span>
+                Collect the pages with your job code on the cover sheet
+              </li>
+            </ul>
+          </div>
+
+          <p class="text-[11px] text-zinc-400">Engineering Society · UNESWA</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="mt-6 text-center text-[11px] text-zinc-400">
+      {{ society_name|default:"Engineering Society" }} · University of Eswatini
+    </p>
+  </div>
+</div>
+{% endblock %}

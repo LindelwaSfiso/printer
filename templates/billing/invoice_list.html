@@ -1,0 +1,47 @@
+{% extends "layouts/app.html" %}
+{% load ui humanize %}
+
+{% block title %}My invoices · ESprints{% endblock %}
+{% block page_title %}My invoices{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'billing:topup' %}" class="btn-primary btn-sm">New top-up</a>
+{% endblock %}
+
+{% block content %}
+<div class="card overflow-hidden">
+  {% if invoices %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr><th>Reference</th><th class="text-right">Amount</th><th class="text-right">Credits</th>
+              <th>Status</th><th>Transaction ID</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for invoice in invoices %}
+            <tr>
+              <td class="font-mono text-[12px] font-medium text-zinc-900">{{ invoice.reference }}</td>
+              <td class="text-right tabular-nums">{{ invoice.amount_rand }}</td>
+              <td class="text-right tabular-nums font-medium">{{ invoice.credits|intcomma }}</td>
+              <td><span class="{{ invoice.status|status_class }}"><i class="dot"></i>{{ invoice.get_status_display }}</span></td>
+              <td class="font-mono text-[11px]">{{ invoice.momo_txn_id|default:"—" }}</td>
+              <td class="whitespace-nowrap text-[12px] text-zinc-500">{{ invoice.created_at|date:"j M Y" }}</td>
+              <td class="text-right">
+                <a href="{% url 'billing:invoice_detail' invoice.reference %}" class="btn-ghost btn-sm">Open</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="px-5 py-14 text-center">
+      <p class="text-[13px] font-medium text-zinc-700">No invoices yet</p>
+      <p class="mx-auto mt-1 max-w-sm text-[11.5px] leading-relaxed text-zinc-500">
+        Create one to add credits to your account. You pay by mobile money and the treasurer approves it.
+      </p>
+      <a href="{% url 'billing:topup' %}" class="btn-primary btn-sm mt-4">Create a top-up</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
