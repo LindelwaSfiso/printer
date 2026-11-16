@@ -104,7 +104,17 @@ class HomeView(LoginRequiredMixin, View):
             "jobs_failed": jobs.filter(status=PrintJob.Status.FAILED).count(),
         }
         from apps.printing.stats import daily_pages
-        context["chart"] = daily_pages(days=30, member=request.user)
+
+        ranges = (7, 30, 90)
+        try:
+            days = int(request.GET.get("range", 30))
+        except (TypeError, ValueError):
+            days = 30
+        if days not in ranges:
+            days = 30
+        context["chart"] = daily_pages(days=days, member=request.user)
+        context["range_options"] = ranges
+        context["range_days"] = days
         return render(request, self.template_name, context)
 
 

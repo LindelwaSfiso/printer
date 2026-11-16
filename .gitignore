@@ -13,3 +13,4 @@ backups/
 .tmp/
 .acl-reports/
 node_modules/
+docs/screenshots/.browser-profile/

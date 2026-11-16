@@ -11,7 +11,8 @@ register = template.Library()
 def _points(values, width, height, pad):
     if not values:
         return []
-    peak = max(values) or 1
+    # 12% headroom: a single spike should not touch the top of the card.
+    peak = (max(values) or 1) * 1.12
     span = max(len(values) - 1, 1)
     step = (width - pad * 2) / span
     usable = height - pad * 2
