@@ -1,41 +1,29 @@
-"""Capture the presentation screenshots automatically.
+"""Capture the presentation screenshots with Playwright.
 
-    .venv\\Scripts\\python.exe manage.py runserver     # terminal 1, leave it running
-    .venv\\Scripts\\python.exe tools\\capture_screens.py
+    .venv\\Scripts\\python.exe manage.py runserver          # terminal 1
+    .venv\\Scripts\\python.exe tools\\capture_screens.py    # terminal 2
 
-Produces docs/screenshots/01-…png … 14-…png, plus a text file with the
-`check_credits` output you can screenshot in a terminal.
+Writes docs/screenshots/01-…png … 14-…png and 15-ledger-check.txt.
 
-How it works
-------------
-* It writes real Django session rows for an admin and a member (exactly what
-  `login()` would write) and runs two tiny local proxies that attach that cookie
-  to every request. A headless browser launched with --screenshot runs no script
-  of ours, so injecting the session is the only way to photograph a page behind
-  a login. No backdoor: the sessions are ordinary, and they are deleted when the
-  run finishes.
-* It creates the states the shots need — a priced job, a queued job, a printed
-  job, a submitted invoice, a failed job — through the same service functions the
-  web app uses. Nothing is faked; the numbers in the screenshots are real rows.
+Install once, if you have not:
 
-Why this cannot run inside a coding sandbox: Chrome/Edge on Windows build their
-process tree over named pipes and use process handles for their crash handler, so
-a sandbox that denies those makes the browser exit before it renders. Run this
-from your own terminal and it works.
+    .venv\\Scripts\\python.exe -m pip install playwright
+    .venv\\Scripts\\python.exe -m playwright install chromium
+
+That second command downloads a browser (~130 MB). You can skip it: the script
+falls back to the Edge or Chrome already installed on this machine, which is why
+it tries `channel="msedge"` and `channel="chrome"` before the bundled one.
+
+Why Playwright rather than headless Chrome on the command line: it signs in
+through the real login form (so the screenshots prove the login works), waits for
+the page to settle instead of guessing a delay, and captures full-page images
+without a hand-tuned window height per screen.
 """
 from __future__ import annotations
 
 import os
-import shutil
-import subprocess
 import sys
-import threading
-import tempfile
 import time
-import urllib.error
-import urllib.request
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from io import BytesIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,310 +32,252 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 os.environ.setdefault("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
 
 OUT = ROOT / "docs" / "screenshots"
-# Scratch work lives on a short path with no spaces: Chromium mis-handles a
-# --screenshot= value inside a folder such as "Final Years 2026".
-WORK = Path(tempfile.gettempdir()) / "esprints-shots"
-
-BASE_FLAGS = [
-    "--disable-gpu", "--no-sandbox", "--hide-scrollbars", "--no-first-run",
-    "--no-default-browser-check", "--disable-crash-reporter",
-    "--disable-extensions", "--disable-background-networking",
-    "--force-device-scale-factor=1",
-]
-FLAG_SETS = [
-    ("headless-new", ["--headless=new"]),
-    ("headless-old", ["--headless=old"]),
-    ("headless", ["--headless"]),
-]
-UPSTREAM = "http://127.0.0.1:8000"
-ADMIN_PORT = 8766
-MEMBER_PORT = 8767
-
-BROWSERS = [
-    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-]
-
+BASE = os.environ.get("SCREENSHOT_URL", "http://127.0.0.1:8000")
 ADMIN_NO = os.environ.get("SCREENSHOT_ADMIN", "ADMIN001")
 MEMBER_NO = os.environ.get("SCREENSHOT_MEMBER", "202202881")
+PASSWORD = os.environ.get("SCREENSHOT_PASSWORD", "esprints123")
+VIEWPORT = {"width": 1440, "height": 900}
+SCALE = 2                      # crisp on a projector; PNGs stay under ~800 KB
+
+CHANNELS = ["msedge", "chrome", None]      # None = Playwright's own Chromium
 
 
 # --------------------------------------------------------------------------- #
-# Session cookie injection
+# Django side: build the states the screenshots need
 # --------------------------------------------------------------------------- #
-class CookieProxy(ThreadingHTTPServer):
-    """Serves 127.0.0.1:PORT, forwarding to Django with a session cookie attached."""
-
-    daemon_threads = True
-
-    def __init__(self, port, session_key):
-        self.session_key = session_key
-        super().__init__(("127.0.0.1", port), _Handler)
-
-    def server_bind(self):
-        # HTTPServer.server_bind calls getfqdn(), which can hang for seconds here.
-        import socketserver
-        socketserver.TCPServer.server_bind(self)
-        self.server_name = "127.0.0.1"
-        self.server_port = self.server_address[1]
+def setup_django():
+    import django
+    django.setup()
 
 
-class _Handler(BaseHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
-
-    def do_GET(self):
-        request = urllib.request.Request(UPSTREAM + self.path)
-        if getattr(self.server, "session_key", None):
-            request.add_header("Cookie", f"sessionid={self.server.session_key}")
-        try:
-            with urllib.request.urlopen(request, timeout=30) as response:
-                body, status = response.read(), response.status
-                content_type = response.headers.get("Content-Type", "text/html")
-        except urllib.error.HTTPError as error:
-            body, status = error.read(), error.code
-            content_type = error.headers.get("Content-Type", "text/html")
-        except Exception as error:                        # noqa: BLE001
-            body, status = f"proxy error: {error}".encode(), 502
-            content_type = "text/plain"
-
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
-
-
-def make_session(django, student_no):
-    from django.contrib.auth import get_user_model
-    from django.contrib.sessions.backends.db import SessionStore
-
-    user = get_user_model().objects.filter(student_no=student_no).first()
-    if user is None:
-        raise SystemExit(f"No account {student_no}. Run: manage.py seed_demo")
-    session = SessionStore()
-    session["_auth_user_id"] = str(user.pk)
-    session["_auth_user_backend"] = "django.contrib.auth.backends.ModelBackend"
-    session["_auth_user_hash"] = user.get_session_auth_hash()
-    session.create()
-    return session.session_key, user
-
-
-# --------------------------------------------------------------------------- #
-# Demo state (real rows, created through the app's own services)
-# --------------------------------------------------------------------------- #
 def demo_pdf(pages=4):
+    from io import BytesIO
+
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
 
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     for number in range(1, pages + 1):
-        pdf.setFont("Helvetica-Bold", 26)
+        pdf.setFont("Helvetica-Bold", 24)
         pdf.drawString(60, 700, "ESprints — demonstration document")
-        pdf.setFont("Helvetica", 13)
+        pdf.setFont("Helvetica", 12)
         pdf.drawString(60, 665, f"Page {number} of {pages}")
-        pdf.setFont("Helvetica", 11)
+        pdf.setFont("Helvetica", 10)
         pdf.drawString(60, 640, "Generated for the progress presentation.")
         pdf.showPage()
     pdf.save()
     return buffer.getvalue()
 
 
-def ensure_credits(member, minimum=400):
+def seed_state():
+    """Create a priced job, a printed job, a failed job and a submitted invoice."""
+    from django.contrib.auth import get_user_model
+
+    from apps.billing import services as billing
+    from apps.billing.models import Invoice
     from apps.credits.services import ensure_account, post_entry
+    from apps.printing import services as printing
+    from apps.printing.models import PrintJob
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    User = get_user_model()
+    member = User.objects.filter(student_no=MEMBER_NO).first()
+    if member is None:
+        raise SystemExit(f"No member {MEMBER_NO}. Run: manage.py seed_demo")
 
     account = ensure_account(member)
-    if account.available_credits < minimum:
-        post_entry(account_id=account.id, delta_credits=minimum,
-                   kind="ADJUSTMENT", reference=f"screens:{member.pk}:topup",
+    if account.available_credits < 400:
+        post_entry(account_id=account.id, delta_credits=500, kind="ADJUSTMENT",
+                   reference=f"screens:{member.pk}:{int(time.time())}",
                    memo="Screenshot demo credit")
-        account.refresh_from_db()
-    return account
 
+    def make(pages, sides="DUPLEX"):
+        upload = SimpleUploadedFile("Project-proposal.pdf", demo_pdf(pages),
+                                    content_type="application/pdf")
+        return printing.create_draft(
+            member=member, uploaded=upload,
+            cleaned={"page_count": pages, "copies": 1, "colour_mode": "MONO",
+                     "sides": sides, "paper": "A4"})
 
-def create_job(member, *, pages=4, sides="DUPLEX", colour="MONO"):
-    from django.core.files.uploadedfile import SimpleUploadedFile
-    from apps.printing import services
+    # Clear anything left queued by earlier runs, so the job we choose to print
+    # below is unambiguously the next one in line.
+    printing.process_all(limit=50)
 
-    upload = SimpleUploadedFile("Project-proposal.pdf", demo_pdf(pages),
-                                content_type="application/pdf")
-    return services.create_draft(
-        member=member, uploaded=upload,
-        cleaned={"page_count": pages, "copies": 1, "colour_mode": colour,
-                 "sides": sides, "paper": "A4"})
+    priced = make(4)                                    # shot 04, still a draft
 
+    to_print = make(6)
+    printing.confirm_job(to_print)
+    printing.process_all(limit=1)
+    to_print.refresh_from_db()
+    if to_print.status != PrintJob.Status.PRINTED:
+        print(f"  warning: the job to print ended {to_print.status}")
 
-def create_pending_invoice(member):
-    from apps.billing import services
+    waiting = make(3)                                   # shot 05 and the queue page
+    printing.confirm_job(waiting)
 
-    stamp = time.strftime("%d%H%M%S")
-    invoice = services.create_invoice(member=member, amount_cents=2000)
-    services.submit_transaction_id(invoice=invoice, txn_id=f"MP2607{stamp}",
-                                   payer_phone=member.phone or "+26876123456")
-    invoice.refresh_from_db()
-    return invoice
+    failed = make(2, sides="SIMPLEX")
+    printing.confirm_job(failed)
+    printing.fail_job(failed, "Printer reported: out of paper (tray 1)")
+
+    # A running print worker empties the queue every couple of seconds, which
+    # makes shots 05 and 11 (and sometimes 14) impossible to take. Say so plainly
+    # instead of producing a screenshot of the wrong state.
+    import time as _time
+    _time.sleep(2.5)
+    waiting.refresh_from_db()
+    failed.refresh_from_db()
+    if waiting.status != PrintJob.Status.QUEUED:
+        print("  NOTE: a print worker is running, so the queued job was picked up.\n"
+              "        Stop it (Ctrl+C in the run_worker window) and run this again\n"
+              "        so shots 05 and 11 show a job still waiting.")
+    if failed.status != PrintJob.Status.FAILED:
+        print(f"  NOTE: the failed job ended {failed.status}; retake shot 14 with"
+              f" the worker stopped.")
+
+    invoice = Invoice.objects.filter(member=member,
+                                     status=Invoice.Status.AWAITING_APPROVAL).first()
+    if invoice is None:
+        invoice = billing.create_invoice(member=member, amount_cents=2000)
+        billing.submit_transaction_id(
+            invoice=invoice, txn_id=f"MP{int(time.time())}",
+            payer_phone=member.phone or "+26876123456")
+        invoice.refresh_from_db()
+
+    return member, priced, waiting, to_print, failed, invoice
 
 
 # --------------------------------------------------------------------------- #
-# Browser
+# Browser side
 # --------------------------------------------------------------------------- #
-def probe_browsers():
-    """Find a browser + flag combination that can actually render here.
+def wait_for_server():
+    import urllib.request
 
-    Chromium is fussy in ways that depend on the machine: older builds reject
-    --headless=new, some profiles refuse to start without --no-sandbox, and a
-    screenshot path containing spaces is a long-standing Windows trap. So we
-    try a small matrix against a data: URL, and keep the first combination that
-    produces a PNG. The user sees exactly what was tried.
-    """
-    WORK.mkdir(parents=True, exist_ok=True)
-    found = [path for path in BROWSERS if Path(path).exists()]
-    if not found:
-        raise SystemExit("Chrome and Edge were not found. Install one, or edit BROWSERS.")
+    for _ in range(30):
+        try:
+            with urllib.request.urlopen(f"{BASE}/health/", timeout=2) as response:
+                if response.status == 200:
+                    return
+        except Exception:                                # noqa: BLE001
+            time.sleep(0.5)
+    raise SystemExit(f"{BASE} is not answering. Start it first:\n"
+                     f"  .venv\\Scripts\\python.exe manage.py runserver")
 
-    page = "data:text/html,<h1 style='font:48px sans-serif'>ESprints probe</h1>"
-    for browser in found:
-        for label, flags in FLAG_SETS:
-            target = WORK / f"probe-{label}.png"
-            if target.exists():
-                target.unlink()
-            ok, detail = attempt(browser, flags, page, target, 400)
-            state = "OK" if ok else f"failed ({detail})"
-            print(f"  {Path(browser).name:<12} {label:<14} {state}")
-            if ok:
-                print(f"using: {Path(browser).name} {label}")
-                return browser, flags
+
+def launch(playwright):
+    problems = []
+    for channel in CHANNELS:
+        label = channel or "playwright chromium"
+        try:
+            if channel:
+                browser = playwright.chromium.launch(channel=channel, headless=True)
+            else:
+                browser = playwright.chromium.launch(headless=True)
+        except Exception as error:                       # noqa: BLE001
+            first = str(error).strip().splitlines()[0][:150]
+            problems.append(f"  {label:<20} {first}")
+            continue
+        print(f"browser: {label}")
+        return browser
+    print("Could not launch a browser:")
+    for line in problems:
+        print(line)
     raise SystemExit(
-        "No browser could render. Run with --probe and paste the output, and check "
-        "that Chrome/Edge opens normally when you double-click it.
-"
-        f"Debug files were left in {WORK}")
+        "Install Playwright's own Chromium and retry:\n"
+        "  .venv\\Scripts\\python.exe -m playwright install chromium\n"
+        "or open Edge/Chrome once by hand and run this again.")
 
 
-def attempt(browser, flags, url, target, height, timeout=60):
-    command = [
-        browser, *flags, *BASE_FLAGS,
-        f"--user-data-dir={WORK / 'profile'}",
-        f"--window-size=1440,{height}",
-        "--virtual-time-budget=3000",
-        f"--screenshot={target}",
-        url,
-    ]
-    try:
-        result = subprocess.run(command, capture_output=True, text=True,
-                                timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return False, f"no answer after {timeout}s"
-
-    for _ in range(60):
-        if target.exists() and target.stat().st_size > 2000:
-            return True, ""
-        time.sleep(0.25)
-
-    lines = (result.stderr or result.stdout or "").strip().splitlines()
-    detail = lines[-1][:150] if lines else "exited silently"
-    return False, f"exit {result.returncode}, {detail}"
+def sign_in(page, student_no):
+    page.goto(f"{BASE}/login/", wait_until="domcontentloaded")
+    page.fill("#id_username", student_no)
+    page.fill("#id_password", PASSWORD)
+    page.click("button[type=submit]")
+    page.wait_for_load_state("networkidle")
+    if "/login/" in page.url:
+        raise SystemExit(
+            f"Sign-in failed for {student_no}. Check SCREENSHOT_PASSWORD "
+            f"(currently {PASSWORD!r}).")
 
 
-def shoot(browser, flags, url, target: Path, height: int) -> bool:
-    """Screenshot to a scratch path, then move it into docs/screenshots."""
-    scratch = WORK / f"shot-{target.stem}.png"
-    if scratch.exists():
-        scratch.unlink()
-    ok, detail = attempt(browser, flags, url, scratch, height)
-    if ok:
-        shutil.move(str(scratch), str(target))
-        return True
-    if detail:
-        print(f"        {detail}")
-    return False
+def snap(page, name, note=""):
+    target = OUT / f"{name}.png"
+    page.wait_for_timeout(250)                 # let fonts settle
+    page.screenshot(path=str(target), full_page=True)
+    size = target.stat().st_size
+    print(f"  {name:<26} {page.url.replace(BASE, '')[:44]:<46} {size:>8,} B")
+    return target
 
 
-# --------------------------------------------------------------------------- #
-# The run
 # --------------------------------------------------------------------------- #
 def main():
-    import django
-    django.setup()
-
-    from django.contrib.sessions.models import Session
-    from apps.billing.models import Invoice
-    from apps.credits.services import ensure_account
-    from apps.printing import services as printing
+    dry_run = "--dry-run" in sys.argv
+    only = None
+    if "--only" in sys.argv:
+        only = sys.argv[sys.argv.index("--only") + 1]
 
     OUT.mkdir(parents=True, exist_ok=True)
-    wait_for_server()
-    print("looking for a browser that can render:")
-    browser, flags = probe_browsers()
+    setup_django()
+    if not dry_run:
+        wait_for_server()
+    member, priced, waiting, printed, failed, invoice = seed_state()
+    print(f"member {member.student_no} · draft {priced.code} · queued "
+          f"{waiting.code} · printed {printed.code} · failed {failed.code} · "
+          f"invoice {invoice.reference}")
 
-    admin_key, admin = make_session(django, ADMIN_NO)
-    member_key, member = make_session(django, MEMBER_NO)
-    if member.credit_account and member.credit_account.available_credits < 200:
-        ensure_credits(member)
-    elif not hasattr(member, "credit_account"):
-        ensure_credits(member)
-    print(f"sessions: {admin.student_no} (admin), {member.student_no} (member)")
-    if member.active_subscription is None:
-        print("  note: this member has no active plan — they print on top-up credits.")
+    plan = [
+        ("01-login", "anonymous", "/login/"),
+        ("02-member-dashboard", "member", "/home/"),
+        ("03-upload", "member", "/jobs/new/"),
+        ("04-price-confirm", "member", f"/jobs/{priced.public_id}/"),
+        ("05-queued", "member", f"/jobs/{waiting.public_id}/"),
+        ("06-credits-statement", "member", "/credits/"),
+        ("07-topup-invoice", "member", "/billing/topup/"),
+        ("08-transaction-submitted", "member", f"/billing/{invoice.reference}/"),
+        ("09-admin-dashboard", "admin", "/manage/"),
+        ("10-invoice-review", "admin", f"/manage/invoices/{invoice.reference}/"),
+        ("11-queue", "admin", "/manage/queue/"),
+        ("12-printed-output", "member", f"/jobs/{printed.public_id}/"),
+        ("13-members", "admin", "/manage/members/"),
+        ("14-failure", "member", f"/jobs/{failed.public_id}/"),
+    ]
+    plan = [row for row in plan if not only or row[0].startswith(only)]
 
-    admin_proxy = CookieProxy(ADMIN_PORT, admin_key)
-    member_proxy = CookieProxy(MEMBER_PORT, member_key)
-    for proxy in (admin_proxy, member_proxy):
-        threading.Thread(target=proxy.serve_forever, daemon=True).start()
+    if dry_run:
+        print("\n--dry-run: would capture")
+        for name, role, path in plan:
+            print(f"  {name:<26} {role:<10} {path}")
+        return
 
-    base = {None: UPSTREAM,
-            "admin": f"http://127.0.0.1:{ADMIN_PORT}",
-            "member": f"http://127.0.0.1:{MEMBER_PORT}"}
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        raise SystemExit(
+            "Playwright is not installed:\n"
+            "  .venv\\Scripts\\python.exe -m pip install playwright")
 
-    captured, failed = 0, []
+    captured = 0
+    with sync_playwright() as playwright:
+        browser = launch(playwright)
+        contexts = {}
+        for role in ("anonymous", "member", "admin"):
+            context = browser.new_context(viewport=VIEWPORT,
+                                          device_scale_factor=SCALE)
+            page = context.new_page()
+            page.set_default_timeout(15000)
+            if role != "anonymous":
+                sign_in(page, ADMIN_NO if role == "admin" else MEMBER_NO)
+            contexts[role] = page
 
-    def shot(name, path, role=None, height=1100):
-        nonlocal captured
-        target = OUT / f"{name}.png"
-        print(f"  {name:<26} {path}")
-        if shoot(browser, flags, base[role] + path, target, height):
+        print()
+        for name, role, path in plan:
+            page = contexts[role]
+            page.goto(BASE + path, wait_until="networkidle")
+            snap(page, name)
             captured += 1
-            print(f"        {target.name}  ({target.stat().st_size:,} bytes)")
-        else:
-            failed.append(name)
-            print("        FAILED")
 
-    # --- a priced job, photographed before it is confirmed -----------------
-    ensure_credits(member)
-    job = create_job(member)
+        browser.close()
 
-    shot("01-login", "/login/", None, 900)
-    shot("02-member-dashboard", "/home/", "member", 1180)
-    shot("03-upload", "/jobs/new/", "member", 1100)
-    shot("04-price-confirm", f"/jobs/{job.public_id}/", "member", 1000)
-
-    printing.confirm_job(job)
-    shot("05-queued", f"/jobs/{job.public_id}/", "member", 1000)
-
-    shot("06-credits-statement", "/credits/", "member", 1150)
-    shot("07-topup-invoice", "/billing/topup/", "member", 950)
-
-    invoice = create_pending_invoice(member)
-    shot("08-transaction-submitted", f"/billing/{invoice.reference}/", "member", 1050)
-    shot("09-admin-dashboard", "/manage/", "admin", 1250)
-    shot("10-invoice-review", f"/manage/invoices/{invoice.reference}/", "admin", 1000)
-    shot("11-queue", "/manage/queue/", "admin", 1050)
-
-    printing.process_all(limit=1)
-    shot("12-printed-output", f"/jobs/{job.public_id}/", "member", 1000)
-
-    shot("13-members", "/manage/members/", "admin", 950)
-
-    # --- one honest failure ------------------------------------------------
-    broken = create_job(member, pages=2, sides="SIMPLEX")
-    printing.confirm_job(broken)
-    printing.fail_job(broken, "Printer reported: out of paper (tray 1)")
-    shot("14-failure", f"/jobs/{broken.public_id}/", "member", 1000)
-
-    # --- evidence that cannot be photographed from a browser ---------------
     from django.core.management import call_command
     from io import StringIO
 
@@ -357,24 +287,11 @@ def main():
     except SystemExit:
         pass
     (OUT / "15-ledger-check.txt").write_text(
-        "$ python manage.py check_credits\n" + buffer.getvalue()
-        + "\nScreenshot this file in a terminal, or paste it into the report.\n",
-        encoding="utf-8")
-
-    for key in (admin_key, member_key):
-        Session.objects.filter(session_key=key).delete()
-    admin_proxy.shutdown()
-    member_proxy.shutdown()
+        "$ python manage.py check_credits\n" + buffer.getvalue(), encoding="utf-8")
 
     print(f"\n{captured} screenshot(s) in {OUT}")
-    if failed:
-        print("failed: " + ", ".join(failed))
-    print("15-ledger-check.txt written — screenshot it in a terminal window.")
+    print("15-ledger-check.txt holds the ledger output — screenshot it in a terminal.")
 
 
 if __name__ == "__main__":
-    if "--probe" in sys.argv:
-        print(f"scratch: {WORK}")
-        probe_browsers()
-    else:
-        main()
+    main()

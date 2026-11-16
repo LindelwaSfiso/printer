@@ -1,0 +1,2 @@
+$ python manage.py check_credits
+Checked; 0 problem(s)
