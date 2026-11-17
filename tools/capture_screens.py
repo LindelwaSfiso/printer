@@ -182,6 +182,13 @@ def launch(playwright):
     print("Could not launch a browser:")
     for line in problems:
         print(line)
+    blocked = any(word in " ".join(problems).lower()
+                  for word in ("access is denied", "cannot launch node.js", "winerror 5"))
+    if blocked:
+        raise SystemExit(
+            "Something is blocking the browser (antivirus, a restricted terminal, or a\n"
+            "sandbox). Run this from a normal PowerShell window, or add an exclusion for\n"
+            "the project folder and try again.")
     raise SystemExit(
         "Install Playwright's own Chromium and retry:\n"
         "  .venv\\Scripts\\python.exe -m playwright install chromium\n"
